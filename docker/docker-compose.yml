@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ../data:/app/data
+      - ../embeddings:/app/embeddings
+    command: python -m api.main
+
+  # Add additional services as needed
+  # - Vector database (Milvus, Pinecone, etc.)
+  # - Cache (Redis)
+  # - Message queue (RabbitMQ, Kafka)
