@@ -1,0 +1,11 @@
+Compare the following documents based on the given query.
+
+Query: {query}
+
+Document 1:
+{doc1}
+
+Document 2:
+{doc2}
+
+Comparison:
