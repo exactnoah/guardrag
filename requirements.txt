@@ -13,4 +13,4 @@ sentence-transformers==5.2.2
 
 # These will be auto-installed as dependencies, but pinning for reproducibility:
 torch==2.10.0
-transformers==4.41.0
+transformers==4.57.0

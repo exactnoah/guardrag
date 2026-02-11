@@ -12,6 +12,7 @@ from haystack.components.embedders import SentenceTransformersDocumentEmbedder, 
 from haystack.components.retrievers.in_memory import InMemoryEmbeddingRetriever
 from haystack.components.builders import PromptBuilder
 from haystack_integrations.components.generators.ollama import OllamaGenerator
+from pypdf import PdfReader
 
 # Configuration
 DOCS_DIR = Path("./docs")
@@ -27,15 +28,32 @@ def load_documents(docs_dir: Path) -> list[Document]:
     if not docs_dir.exists():
         print(f"Creating {docs_dir} directory...")
         docs_dir.mkdir(parents=True, exist_ok=True)
-        print(f"Please add .txt files to {docs_dir} and run again.")
+        print(f"Please add .txt or .pdf files to {docs_dir} and run again.")
         return documents
     
-    for file_path in docs_dir.glob("*.txt"):
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-            documents.append(Document(content=content, meta={"filename": file_path.name}))
-    
-    print(f"Loaded {len(documents)} documents from {docs_dir}")
+    for file_path in docs_dir.iterdir():
+        if file_path.suffix.lower() not in ['.txt', '.pdf']:
+            continue
+
+        try:
+            if file_path.suffix.lower() == '.txt': # txt
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+            else: # pdf
+                reader = PdfReader(file_path)
+                text_parts = [page.extract_text() for page in reader.pages]
+                content = '\n'.join(text_parts)
+            
+            if content.strip(): # check if empty
+                documents.append(Document(
+                    content=content, 
+                    meta={"filename": file_path.name}
+                ))
+        
+        except Exception as e:
+            print(f"✗ Error loading {file_path.name}: {e}")
+        
+    print(f"\nTotal: {len(documents)} documents loaded")
     return documents
 
 
