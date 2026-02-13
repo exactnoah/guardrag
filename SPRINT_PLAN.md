@@ -22,11 +22,16 @@
 ## Sprint 3 (Feb 10 - Feb 23)
 **RAG Pipeline & LLM Integration**
 
-- RAG pipeline with sliding window retrieval
-- Severity-weighted context selection
-- Ollama integration (LLaMA 3.1 8B primary)
-- Model benchmarks (Mistral 7B, Phi-3)
-- Prompt templates and model abstraction layer
+- Lift and shift logic from PoC to GuardRag Repository
+- Investigate UI and try to create minimal PoC (dependencies)
+- Continue automation efforts
+- Investigative work surrounding context selection and what that entails (benchmarking + severity weighted context selection)
+- Investigative work surrounding RAG pipeline, overall design, and sliding window retrieval
+
+- ~~RAG pipeline with sliding window retrieval~~
+- ~~Severity-weighted context selection~~
+- ~~Ollama integration (LLaMA 3.1 8B primary)~~
+- ~~Model benchmarks (Mistral 7B, Phi-3)~~
 
 ## Sprint 4 (Feb 24 - Mar 9)
 **Classification & Safe Action Planning**
@@ -37,6 +42,7 @@
 - Safety constraints and explainability
 - YAML action manifests
 - UI design discussion
+- Prompt templates and model abstraction layer
 
 ## Sprint 5 (Mar 10 - Mar 23)
 **Controlled Execution & CI Integration**
