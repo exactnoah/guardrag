@@ -17,7 +17,7 @@ if (Test-Path "venv") {
 
 # Create virtual environment
 Write-Host "Creating virtual environment..." -ForegroundColor Cyan
-py -3.11 -m venv venv
+py -3.14 -m venv venv
 
 # Activate it
 Write-Host "Activating virtual environment..." -ForegroundColor Cyan

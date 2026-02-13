@@ -1,7 +1,7 @@
 # Haystack + Ollama and Mistral:7B RAG Pipeline
 ### Prerequisites:
 
-Python 3.11 installed
+Python 3.14 installed
 
 ## Setup (One-time)
 
