@@ -15,7 +15,7 @@ from haystack_integrations.components.generators.ollama import OllamaGenerator
 from pypdf import PdfReader
 
 # Configuration
-DOCS_DIR = Path("./docs")
+DOCS_DIR = Path("../docs")
 OLLAMA_MODEL = "mistral:7b" 
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 TOP_K = 3  # Number of documents to retrieve

@@ -1,4 +1,11 @@
 # setup.ps1 - One-time setup script for Haystack RAG project
+Write-Host "Installing Ollama and Mistral:7b (if not already exists)..." -ForegroundColor Cyan
+py .\ollama\install.py
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "install.py failed. Exiting setup." -ForegroundColor Red
+    exit 1
+}
 
 Write-Host "Setting up Haystack RAG environment..." -ForegroundColor Green
 
@@ -29,7 +36,7 @@ python -m pip install --upgrade pip --quiet
 
 # Install requirements
 Write-Host "Installing dependencies (this may take 5-10 minutes)..." -ForegroundColor Cyan
-pip install -r requirements.txt
+pip install -e .[haystack]
 
 Write-Host ""
 Write-Host "Setup complete!" -ForegroundColor Green
