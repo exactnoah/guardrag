@@ -1,0 +1,15 @@
+Ollama is a tool that makes it easy to run large language models locally on your computer.
+
+Key benefits:
+- Run models completely offline
+- No API costs or rate limits
+- Full data privacy - everything stays on your machine
+- Support for many popular models: Llama 2, Mistral, Mixtral, CodeLlama, and more
+
+Basic Ollama commands:
+- ollama pull <model>  : Download a model
+- ollama list          : List installed models
+- ollama run <model>   : Run a model interactively
+- ollama serve         : Start the Ollama server
+
+Ollama uses a REST API on localhost:11434 by default, making it easy to integrate with other tools and frameworks.
