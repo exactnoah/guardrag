@@ -38,7 +38,7 @@ Run the setup script:
 powershell   
 ```.\setup.ps1```
 
-Ihis will download Ollama if it isn't already on your computer and pull Mistral 7B. Then it will create a virtual environment and install all dependencies (~5-10 minutes)
+Ihis will check if Ollama is already on your computer and pull Mistral 7B. Then it will create a virtual environment and install all dependencies (~5-10 minutes)
 
 ## Usage
 
@@ -59,15 +59,13 @@ Enter "quit" to exit.
 ## Repository Structure
 
 - `data/` — raw inputs, processed chunks, evaluation datasets  
-- `ingestion/` — document loading, chunking, preprocessing  
-- `embeddings/` — embedding generation and index management  
-- `retrieval/` — vector search, ranking, metadata filtering  
-- `generation/` — prompt templates and LLM interaction  
 - `evaluation/` — metrics, datasets, evaluators, reports  
-- `api/` — query and health endpoints  
-- `pipelines/` — indexing and evaluation automation  
+- `api/` — rag interface
+- `pipelines/` — Haystack rag, evaluation
 - `ci/`, `.github/` — CI logic and workflows  
-- `docs/` — architecture, evaluation methodology, design decisions  
+- `docs/` — hold user files
+- `project_docs/` — project documentation (sprint plan, design-decisions, etc)
+- `setup_materials/` — pull mistral script and requirements
 
 ### VM
 Email Michael Craig (michaelcraig@weber.edu) with requests and cc Brad Peterson as well. Make sure to explain it's for 4760 for the semester.
