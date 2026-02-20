@@ -46,19 +46,10 @@ Add your documents to the docs/ folder.
 
 Currently supports .pdf and .txt files
 
-## Activate the virtual environment (if not already active):
-
-powershell   
-```.\venv\Scripts\Activate.ps1```
-
-Note: (venv) should appear in front of file path in terminal.
-
-Use ```deactivate``` to stop virtual environment.
-
 ## Run the pipeline:
 
 powershell   
-```python .\haystack\rag_pipeline.py```
+```python .\pipelines\rag_pipeline.py```
 
 Enter "quit" to exit.
 
@@ -77,3 +68,7 @@ Enter "quit" to exit.
 - `pipelines/` — indexing and evaluation automation  
 - `ci/`, `.github/` — CI logic and workflows  
 - `docs/` — architecture, evaluation methodology, design decisions  
+
+### VM
+Email Michael Craig (michaelcraig@weber.edu) with requests and cc Brad Peterson as well. Make sure to explain it's for 4760 for the semester.
+

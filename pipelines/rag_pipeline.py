@@ -15,7 +15,8 @@ from haystack_integrations.components.generators.ollama import OllamaGenerator
 from pypdf import PdfReader
 
 # Configuration
-DOCS_DIR = Path("../docs")
+BASE_DIR = Path(__file__).resolve().parent.parent
+DOCS_DIR = BASE_DIR / "docs"
 OLLAMA_MODEL = "mistral:7b" 
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 TOP_K = 3  # Number of documents to retrieve
@@ -112,7 +113,7 @@ def main():
     documents = load_documents(DOCS_DIR)
     
     if not documents:
-        print("\nNo documents found. Add .txt files to ./docs/ directory.")
+        print("\nNo documents found. Add .pdf or .txt files to ../docs/ directory.")
         return
     
     print(f"\n[2/3] Indexing documents (this may take a minute on first run)...")

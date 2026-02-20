@@ -1,6 +1,6 @@
 # setup.ps1 - One-time setup script for Haystack RAG project
 Write-Host "Installing Ollama and Mistral:7b (if not already exists)..." -ForegroundColor Cyan
-py .\ollama\install.py
+py .\setup_materials\install_llm.py
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "install.py failed. Exiting setup." -ForegroundColor Red
@@ -36,7 +36,8 @@ python -m pip install --upgrade pip --quiet
 
 # Install requirements
 Write-Host "Installing dependencies (this may take 5-10 minutes)..." -ForegroundColor Cyan
-pip install -e .[haystack]
+#pip install -e .[haystack]
+pip install -r .\setup_materials\requirements.txt
 
 Write-Host ""
 Write-Host "Setup complete!" -ForegroundColor Green
@@ -44,4 +45,4 @@ Write-Host "To activate the environment in future sessions, run:" -ForegroundCol
 Write-Host "  .\venv\Scripts\Activate.ps1" -ForegroundColor White
 Write-Host ""
 Write-Host "To test the setup, run:" -ForegroundColor Yellow
-Write-Host "  python rag_pipeline.py" -ForegroundColor White
+Write-Host "  python .\pipelines\rag_pipeline.py" -ForegroundColor White
