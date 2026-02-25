@@ -13,6 +13,7 @@ from haystack.components.retrievers.in_memory import InMemoryEmbeddingRetriever
 from haystack.components.builders import PromptBuilder
 from haystack_integrations.components.generators.ollama import OllamaGenerator
 from pypdf import PdfReader
+from docx import Document as Docxument
 
 # Configuration
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,21 +30,24 @@ def load_documents(docs_dir: Path) -> list[Document]:
     if not docs_dir.exists():
         print(f"Creating {docs_dir} directory...")
         docs_dir.mkdir(parents=True, exist_ok=True)
-        print(f"Please add .txt or .pdf files to {docs_dir} and run again.")
+        print(f"Please add .txt, .docx, or .pdf files to {docs_dir} and run again.")
         return documents
     
     for file_path in docs_dir.iterdir():
-        if file_path.suffix.lower() not in ['.txt', '.pdf']:
+        if file_path.suffix.lower() not in ['.txt', '.pdf', '.docx']:
             continue
 
         try:
             if file_path.suffix.lower() == '.txt': # txt
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
-            else: # pdf
+            elif file_path.suffix.lower() == '.pdf': # pdf
                 reader = PdfReader(file_path)
                 text_parts = [page.extract_text() for page in reader.pages]
                 content = '\n'.join(text_parts)
+            else: # docx
+                document = Docxument(file_path)
+                content = '\n'.join(para.text for para in document.paragraphs)
             
             if content.strip(): # check if empty
                 documents.append(Document(
@@ -113,7 +117,7 @@ def main():
     documents = load_documents(DOCS_DIR)
     
     if not documents:
-        print("\nNo documents found. Add .pdf or .txt files to ../docs/ directory.")
+        print("\nNo documents found. Add .pdf, .docx, or .txt files to ../docs/ directory.")
         return
     
     print(f"\n[2/3] Indexing documents (this may take a minute on first run)...")

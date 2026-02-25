@@ -34,6 +34,10 @@ Write-Host "Activating virtual environment..." -ForegroundColor Cyan
 Write-Host "Upgrading pip..." -ForegroundColor Cyan
 python -m pip install --upgrade pip --quiet
 
+# Install python-docx
+Write-Host "Installing python-docx..." -ForegroundColor Cyan
+pip install python-docx
+
 # Install requirements
 Write-Host "Installing dependencies (this may take 5-10 minutes)..." -ForegroundColor Cyan
 #pip install -e .[haystack]

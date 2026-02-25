@@ -44,9 +44,18 @@ Ihis will check if Ollama is already on your computer and pull Mistral 7B. Then 
 
 Add your documents to the docs/ folder. 
 
-Currently supports .pdf and .txt files
+Currently supports .pdf, .docx, and .txt files
 
 ## Run the pipeline:
+
+## Activate the virtual environment (if not already active):
+
+powershell   
+```.\venv\Scripts\Activate.ps1```
+
+Note: (venv) should appear in front of file path in terminal.
+
+Use ```deactivate``` to stop virtual environment.
 
 powershell   
 ```python .\pipelines\rag_pipeline.py```
