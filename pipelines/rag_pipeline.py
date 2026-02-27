@@ -15,6 +15,12 @@ from haystack_integrations.components.generators.ollama import OllamaGenerator
 from pypdf import PdfReader
 from docx import Document as Docxument
 
+#tkinter gui
+import tkinter as tk
+from tkinter import scrolledtext
+from tkinter import filedialog
+import shutil
+
 # Configuration
 BASE_DIR = Path(__file__).resolve().parent.parent
 DOCS_DIR = BASE_DIR / "docs"
@@ -22,20 +28,46 @@ OLLAMA_MODEL = "mistral:7b"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 TOP_K = 3  # Number of documents to retrieve
 
+NEW_DOC = False
+indexed_files = set()
 
-def load_documents(docs_dir: Path) -> list[Document]:
+#GUI functions
+def get_file(event=None):
+    filepath = filedialog.askopenfilename()
+    filename = os.path.basename(filepath)
+    shutil.copy(filepath, f"./docs/{filename}")
+    print('Selected: ', filename)
+    print_on_gui(f"{filename} added to Docs Folder. Click submit to index and add to pipeline." )
+
+    global NEW_DOC
+    NEW_DOC = True
+
+def print_on_gui(*args, sep=" ", end="\n"):
+    text = sep.join(map(str, args)) + end
+    print(text)
+
+    txt.config(state="normal")
+    txt.insert("end", text)
+    txt.config(state="disabled")
+    txt.see("end")
+    root.update_idletasks()
+
+def load_documents(docs_dir: Path, only_new=False) -> list[Document]:
     """Load text documents from a directory."""
     documents = []
     
     if not docs_dir.exists():
-        print(f"Creating {docs_dir} directory...")
+        print_on_gui(f"Creating {docs_dir} directory...")
         docs_dir.mkdir(parents=True, exist_ok=True)
-        print(f"Please add .txt, .docx, or .pdf files to {docs_dir} and run again.")
+        print_on_gui(f"Please add .txt, .docx, or .pdf files to {docs_dir} and run again.")
         return documents
     
     for file_path in docs_dir.iterdir():
         if file_path.suffix.lower() not in ['.txt', '.pdf', '.docx']:
             continue
+
+        if only_new and file_path.name in indexed_files:
+            continue 
 
         try:
             if file_path.suffix.lower() == '.txt': # txt
@@ -54,11 +86,12 @@ def load_documents(docs_dir: Path) -> list[Document]:
                     content=content, 
                     meta={"filename": file_path.name}
                 ))
+                indexed_files.add(file_path.name)
         
         except Exception as e:
-            print(f"✗ Error loading {file_path.name}: {e}")
+            print_on_gui(f"✗ Error loading {file_path.name}: {e}")
         
-    print(f"\nTotal: {len(documents)} documents loaded")
+    print_on_gui(f"\nTotal: {len(documents)} documents loaded")
     return documents
 
 
@@ -104,66 +137,109 @@ def create_rag_pipeline(document_store: InMemoryDocumentStore):
     return rag_pipeline
 
 
-def main():
-    print("=" * 60)
-    print("Haystack + Ollama RAG Pipeline")
-    print("=" * 60)
+def rag_load():
+    global NEW_DOC
+    print_on_gui("=" * 60)
+    print_on_gui("Haystack + Ollama RAG Pipeline")
+    print_on_gui("=" * 60)
     
     # Initialize document store
     document_store = InMemoryDocumentStore()
     
     # Load and index documents
-    print("\n[1/3] Loading documents...")
-    documents = load_documents(DOCS_DIR)
+    print_on_gui("\n[1/3] Loading documents...")
+    documents = load_documents(DOCS_DIR, only_new=False)
     
     if not documents:
-        print("\nNo documents found. Add .pdf, .docx, or .txt files to ../docs/ directory.")
+        print_on_gui("\nNo documents found. Add .pdf, .docx, or .txt files to ../docs/ directory.")
         return
     
-    print(f"\n[2/3] Indexing documents (this may take a minute on first run)...")
+    print_on_gui(f"\n[2/3] Indexing documents (this may take a minute on first run)...")
     indexing_pipeline = create_indexing_pipeline(document_store)
     indexing_pipeline.run({"embedder": {"documents": documents}})
-    print(f"✓ Indexed {document_store.count_documents()} documents")
+    print_on_gui(f"✓ Indexed {document_store.count_documents()} documents")
     
     # Create RAG pipeline
-    print("\n[3/3] Creating RAG pipeline...")
+    print_on_gui("\n[3/3] Creating RAG pipeline...")
     rag_pipeline = create_rag_pipeline(document_store)
-    print("✓ Pipeline ready!")
+    print_on_gui("✓ Pipeline ready!")
     
     # Interactive Q&A loop
-    print("\n" + "=" * 60)
-    print("Ask questions about your documents (type 'quit' to exit)")
-    print("=" * 60 + "\n")
+    print_on_gui("\n" + "=" * 60)
+    print_on_gui("Ask questions about your documents (type 'quit' to exit)")
+    print_on_gui("=" * 60 + "\n")
     
     while True:
-        question = input("\nQuestion: ").strip()
+        button_pressed.set("false")
+        print_on_gui("\nQuestion: ")
+        root.wait_variable(button_pressed)
+
+        question = entry.get().strip()
+        print_on_gui(question)
+        entry.delete(0, tk.END)
+
+        if NEW_DOC:
+            print_on_gui("\nNew doc detected, indexing and appending...")
+            new_documents = load_documents(DOCS_DIR, only_new=True)
+
+            if new_documents:
+                indexing_pipeline.run({"embedder": {"documents": new_documents}})
+                print_on_gui("\nNew Document Added")
+            else:
+                print_on_gui("No new documents found")
+            NEW_DOC = False
         
         if question.lower() in ['quit', 'exit', 'q']:
-            print("Goodbye!")
+            print_on_gui("Goodbye!")
+            root.after(3000, root.destroy)
             break
         
         if not question:
             continue
         
-        print("\nThinking...")
+        print_on_gui("\nThinking...")
         result = rag_pipeline.run({
             "text_embedder": {"text": question},
             "prompt_builder": {"question": question}
         })
         
         answer = result["llm"]["replies"][0]
-        print(f"\nAnswer: {answer}")
+        print_on_gui(f"\nAnswer: {answer}")
         
         # Show sources (if available in result)
         if "prompt_builder" in result and "documents" in result["prompt_builder"]:
             retrieved_docs = result["prompt_builder"]["documents"]
             if retrieved_docs:
-                print("\n--- Sources ---")
+                print_on_gui("\n--- Sources ---")
                 for i, doc in enumerate(retrieved_docs, 1):
                     filename = doc.meta.get("filename", "Unknown")
                     preview = doc.content[:100].replace('\n', ' ')
-                    print(f"{i}. {filename}: {preview}...")
+                    print_on_gui(f"{i}. {filename}: {preview}...")
 
+def main():
+    print_on_gui("Loading... \n\n")
+    root.after(4000, rag_load)
+    root.mainloop()
+
+#tkinter GUI setup
+root = tk.Tk()
+root.title("Rag_Test GUI")
+root.minsize(600, 300)
+root.geometry("300x300+300+250")
+
+upload_button = tk.Button(root, text="New File", command=get_file)
+upload_button.pack(anchor="w")
+
+userInput = tk.StringVar()
+entry = tk.Entry(root, width=70)
+entry.pack(padx=10, pady=10, anchor="n", fill="x")
+
+button_pressed = tk.StringVar()
+btn = tk.Button(root, text="submit", command=lambda: button_pressed.set("true"))
+btn.pack(anchor="n")
+
+txt = scrolledtext.ScrolledText(root, height=15, wrap="word")
+txt.pack(padx=10, pady=10, side=tk.BOTTOM, expand=True, anchor="n", fill="both")
 
 if __name__ == "__main__":
     main()
