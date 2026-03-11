@@ -25,8 +25,6 @@
 - Lift and shift logic from PoC to GuardRag Repository
 - Investigate UI and try to create minimal PoC (dependencies)
 - Continue automation efforts
-- Investigative work surrounding context selection and what that entails (benchmarking + severity weighted context selection)
-- Investigative work surrounding RAG pipeline, overall design, and sliding window retrieval
 
 - ~~RAG pipeline with sliding window retrieval~~
 - ~~Severity-weighted context selection~~
@@ -34,23 +32,26 @@
 - ~~Model benchmarks (Mistral 7B, Phi-3)~~
 
 ## Sprint 4 (Feb 24 - Mar 9)
-**Classification & Safe Action Planning**
 
-- Log classification engine (known issue, anomaly, noise)
-- Root cause analysis with confidence scoring
-- Action plan generator (read-only mode)
-- Safety constraints and explainability
-- YAML action manifests
-- UI design discussion
-- Prompt templates and model abstraction layer
+- Research and integrate ragas (evaluation benchmarks) PT. 1
+- CI/CD research+integration with DeepEval (soft dependency on RAGAS) PT. 1
+     - Main PoC with integrated DeepEval framework can be built out with locally run-workflows, but return dummy values until RAGAS is done.
+     - Hard dependency on Installation Wizard work
+- Installation Wizard complete (Have DeepEval + Ragas Installed?)
+- Research into deep thinking?
 
 ## Sprint 5 (Mar 10 - Mar 23)
 **Controlled Execution & CI Integration**
 
-- Action executor with rollback (restart container, clear cache, rollback config, open issue)
-- Sandbox execution and audit logging
-- GitHub Actions CI integration
-- Failed build diagnosis and PR comment bot
+- Take performance metrics; Research efficient file storage to integrate with LLMs for RAG.
+     - Consider Deep-Eval research (launching other models)
+        - Prerequisite of CI work done (DeepEval might dictate how CI) is done.
+- Discuss testing strategy (release branches w/ stable versions?)
+
+- ~~Action executor with rollback (restart container, clear cache, rollback config, open issue)~~
+- ~~Sandbox execution and audit logging~~
+- ~~GitHub Actions CI integration~~
+- ~~Failed build diagnosis and PR comment bot~~
 
 ## Sprint 6 (Mar 24 - Apr 6)
 **Evaluation & User Interface**
@@ -63,6 +64,7 @@
 ## Sprint 7 (Apr 7 - Apr 20)
 **Hardening & Final Delivery**
 
+- Prompt templates and model abstraction layer
 - Stress testing (log floods, corrupted logs, hallucinations, unsafe actions)
 - Edge case handling and known limitations
 - Security review
