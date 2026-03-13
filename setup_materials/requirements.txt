@@ -1,0 +1,16 @@
+# Haystack RAG with Ollama - Requirements
+# Pinned versions to ensure reproducibility and fast installation
+
+# Core Haystack
+haystack-ai==2.23.0
+ollama-haystack==6.0.0
+
+# Document processing
+pypdf==5.1.0
+
+# Embeddings (lightweight, CPU-friendly)
+sentence-transformers==5.2.2
+
+# These will be auto-installed as dependencies, but pinning for reproducibility:
+torch==2.10.0
+transformers==4.57.0
