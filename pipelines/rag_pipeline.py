@@ -12,8 +12,18 @@ from haystack.components.embedders import SentenceTransformersDocumentEmbedder, 
 from haystack.components.retrievers.in_memory import InMemoryEmbeddingRetriever
 from haystack.components.builders import PromptBuilder
 from haystack_integrations.components.generators.ollama import OllamaGenerator
+from haystack.components.preprocessors import DocumentSplitter
+
 from pypdf import PdfReader
 from docx import Document as Docxument
+
+from deepeval.models import OllamaModel
+from deepeval import evaluate
+from deepeval.models.base_model import DeepEvalBaseLLM
+from deepeval.test_case import LLMTestCase, LLMTestCaseParams
+from deepeval.metrics import FaithfulnessMetric, AnswerRelevancyMetric
+
+
 
 #tkinter gui
 import tkinter as tk
@@ -26,7 +36,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DOCS_DIR = BASE_DIR / "docs"
 OLLAMA_MODEL = "mistral:7b" 
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-TOP_K = 3  # Number of documents to retrieve
+TOP_K = 4  # Number of documents to retrieve
 
 NEW_DOC = False
 indexed_files = set()
@@ -51,6 +61,10 @@ def print_on_gui(*args, sep=" ", end="\n"):
     txt.config(state="disabled")
     txt.see("end")
     root.update_idletasks()
+
+
+
+
 
 def load_documents(docs_dir: Path, only_new=False) -> list[Document]:
     """Load text documents from a directory."""
@@ -98,8 +112,16 @@ def load_documents(docs_dir: Path, only_new=False) -> list[Document]:
 def create_indexing_pipeline(document_store: InMemoryDocumentStore):
     """Create a pipeline to embed and store documents."""
     indexing_pipeline = Pipeline()
+
+    indexing_pipeline.add_component("splitter", DocumentSplitter(
+        split_by="word",
+        split_length=200,
+        split_overlap=50
+    ))
+
     indexing_pipeline.add_component("embedder", SentenceTransformersDocumentEmbedder(model=EMBEDDING_MODEL))
     indexing_pipeline.add_component("writer", DocumentWriter(document_store=document_store))
+    indexing_pipeline.connect("splitter.documents", "embedder.documents")
     indexing_pipeline.connect("embedder.documents", "writer.documents")
     return indexing_pipeline
 
@@ -139,6 +161,14 @@ def create_rag_pipeline(document_store: InMemoryDocumentStore):
 
 def rag_load():
     global NEW_DOC
+    judge_model = OllamaModel( #declare Ollama as judge
+        model=OLLAMA_MODEL,
+        base_url="http://localhost:11434"
+    )   
+    dEMetrics = [
+        FaithfulnessMetric(model=judge_model),
+        AnswerRelevancyMetric(model=judge_model),
+    ]
     print_on_gui("=" * 60)
     print_on_gui("Haystack + Ollama RAG Pipeline")
     print_on_gui("=" * 60)
@@ -156,7 +186,7 @@ def rag_load():
     
     print_on_gui(f"\n[2/3] Indexing documents (this may take a minute on first run)...")
     indexing_pipeline = create_indexing_pipeline(document_store)
-    indexing_pipeline.run({"embedder": {"documents": documents}})
+    indexing_pipeline.run({"splitter": {"documents": documents}})
     print_on_gui(f"✓ Indexed {document_store.count_documents()} documents")
     
     # Create RAG pipeline
@@ -168,6 +198,8 @@ def rag_load():
     print_on_gui("\n" + "=" * 60)
     print_on_gui("Ask questions about your documents (type 'quit' to exit)")
     print_on_gui("=" * 60 + "\n")
+
+
     
     while True:
         button_pressed.set("false")
@@ -183,7 +215,7 @@ def rag_load():
             new_documents = load_documents(DOCS_DIR, only_new=True)
 
             if new_documents:
-                indexing_pipeline.run({"embedder": {"documents": new_documents}})
+                indexing_pipeline.run({"splitter": {"documents": new_documents}})
                 print_on_gui("\nNew Document Added")
             else:
                 print_on_gui("No new documents found")
@@ -201,20 +233,69 @@ def rag_load():
         result = rag_pipeline.run({
             "text_embedder": {"text": question},
             "prompt_builder": {"question": question}
-        })
+        },
+            include_outputs_from=["retriever"]
+        )
         
         answer = result["llm"]["replies"][0]
-        print_on_gui(f"\nAnswer: {answer}")
+
+
+
+        
+        retrieved_docs = result["retriever"]["documents"]
         
         # Show sources (if available in result)
-        if "prompt_builder" in result and "documents" in result["prompt_builder"]:
-            retrieved_docs = result["prompt_builder"]["documents"]
-            if retrieved_docs:
-                print_on_gui("\n--- Sources ---")
-                for i, doc in enumerate(retrieved_docs, 1):
-                    filename = doc.meta.get("filename", "Unknown")
-                    preview = doc.content[:100].replace('\n', ' ')
-                    print_on_gui(f"{i}. {filename}: {preview}...")
+        if retrieved_docs:
+
+            testcase = LLMTestCase(
+                input=question,
+                actual_output=answer,
+                retrieval_context = [doc.content for doc in retrieved_docs]
+                )
+            answerValid = True
+            
+            print_on_gui(f"\n\nRe-Evaluating Answer...")
+
+
+            DEresults = evaluate(
+                test_cases=[testcase],
+                metrics=dEMetrics
+            )
+
+
+            
+            metrics_results = DEresults.test_results[0].metrics_data
+
+            if metrics_results[0].score <= 0.75:
+                print_on_gui("\nLikely Halucinations detected. Please try again with a more specific question or after adding relevant files.")
+                print_on_gui(f"Reasoning: {metrics_results[0].reason}")
+                
+                
+                answerValid = False
+            if metrics_results[1].score <= 0.75:
+                print_on_gui("\nGenerated Answer may not be relevant to asked question. Please try again with a more specific question or after adding relevant files.")
+                print_on_gui(f"Reasoning: {metrics_results[1].reason}")
+                answerValid = False
+            
+
+
+            print_on_gui(f"\nAnswer: {answer}")
+
+            if answerValid:
+                print_on_gui("\n--- Evaluation Results ---")
+                for metric in DEresults.test_results[0].metrics_data:
+                    print_on_gui(f"{metric.name}: {metric.score:.2f}")
+                    print_on_gui(f"Reasoning: {metric.reason}")
+
+
+            print_on_gui("\n--- Sources ---")
+            for i, doc in enumerate(retrieved_docs, 1):
+                filename = doc.meta.get("filename", "Unknown")
+                preview = doc.content[:200].replace('\n', ' ')
+                print_on_gui(f"{i}. {filename}: {preview}...")
+
+
+            
 
 def main():
     print_on_gui("Loading... \n\n")
@@ -223,7 +304,7 @@ def main():
 
 #tkinter GUI setup
 root = tk.Tk()
-root.title("Rag_Test GUI")
+root.title("GuardRag")
 root.minsize(600, 300)
 root.geometry("300x300+300+250")
 
