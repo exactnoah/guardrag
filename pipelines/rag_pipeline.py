@@ -19,8 +19,7 @@ from docx import Document as Docxument
 
 from deepeval.models import OllamaModel
 from deepeval import evaluate
-from deepeval.models.base_model import DeepEvalBaseLLM
-from deepeval.test_case import LLMTestCase, LLMTestCaseParams
+from deepeval.test_case import LLMTestCase
 from deepeval.metrics import FaithfulnessMetric, AnswerRelevancyMetric
 
 
@@ -266,13 +265,13 @@ def rag_load():
             
             metrics_results = DEresults.test_results[0].metrics_data
 
-            if metrics_results[0].score <= 0.75:
+            if metrics_results[0].score < 0.75:
                 print_on_gui("\nLikely Halucinations detected. Please try again with a more specific question or after adding relevant files.")
                 print_on_gui(f"Reasoning: {metrics_results[0].reason}")
                 
                 
                 answerValid = False
-            if metrics_results[1].score <= 0.75:
+            if metrics_results[1].score < 0.75:
                 print_on_gui("\nGenerated Answer may not be relevant to asked question. Please try again with a more specific question or after adding relevant files.")
                 print_on_gui(f"Reasoning: {metrics_results[1].reason}")
                 answerValid = False
