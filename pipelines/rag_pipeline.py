@@ -39,6 +39,7 @@ TOP_K = 4  # Number of documents to retrieve
 
 NEW_DOC = False
 indexed_files = set()
+RUNNING = True
 
 #GUI functions
 def get_file(event=None):
@@ -159,7 +160,8 @@ def create_rag_pipeline(document_store: InMemoryDocumentStore):
 
 
 def rag_load():
-    global NEW_DOC
+    global NEW_DOC, RUNNING
+
     judge_model = OllamaModel( #declare Ollama as judge
         model=OLLAMA_MODEL,
         base_url="http://localhost:11434"
@@ -200,10 +202,16 @@ def rag_load():
 
 
     
-    while True:
-        button_pressed.set("false")
+    while RUNNING:
+        button_pressed.set("False")
         print_on_gui("\nQuestion: ")
-        root.wait_variable(button_pressed)
+
+        while button_pressed.get() != "True" and RUNNING:
+            root.update()
+
+        #catch for closing via gui
+        if not RUNNING:
+            break
 
         question = entry.get().strip()
         print_on_gui(question)
@@ -245,53 +253,52 @@ def rag_load():
         
         # Show sources (if available in result)
         if retrieved_docs:
+            if evalChecked == 1: 
+                testcase = LLMTestCase(
+                    input=question,
+                    actual_output=answer,
+                    retrieval_context = [doc.content for doc in retrieved_docs]
+                    )
+                answerValid = True
+                
+                print_on_gui(f"\n\nRe-Evaluating Answer...")
 
-            testcase = LLMTestCase(
-                input=question,
-                actual_output=answer,
-                retrieval_context = [doc.content for doc in retrieved_docs]
+                DEresults = evaluate(
+                    test_cases=[testcase],
+                    metrics=dEMetrics
                 )
-            answerValid = True
-            
-            print_on_gui(f"\n\nRe-Evaluating Answer...")
 
+                metrics_results = DEresults.test_results[0].metrics_data
 
-            DEresults = evaluate(
-                test_cases=[testcase],
-                metrics=dEMetrics
-            )
+                #check if factually correct according to retrieved docs
+                if metrics_results[0].score < 0.75: 
+                    print_on_gui("\nLikely Halucinations detected. Please try again with a more specific question or after adding relevant files.")
+                    print_on_gui(f"Reasoning: {metrics_results[0].reason}")
+                    answerValid = False
 
+                #check if answer actually answers question
+                if metrics_results[1].score < 0.75: 
+                    print_on_gui("\nGenerated Answer may not be relevant to asked question. Please try again with a more specific question or after adding relevant files.")
+                    print_on_gui(f"Reasoning: {metrics_results[1].reason}")
+                    answerValid = False
 
-            
-            metrics_results = DEresults.test_results[0].metrics_data
-
-            if metrics_results[0].score < 0.75:
-                print_on_gui("\nLikely Halucinations detected. Please try again with a more specific question or after adding relevant files.")
-                print_on_gui(f"Reasoning: {metrics_results[0].reason}")
-                
-                
-                answerValid = False
-            if metrics_results[1].score < 0.75:
-                print_on_gui("\nGenerated Answer may not be relevant to asked question. Please try again with a more specific question or after adding relevant files.")
-                print_on_gui(f"Reasoning: {metrics_results[1].reason}")
-                answerValid = False
-            
+                if answerValid:
+                    print_on_gui("\n--- Evaluation Results ---")
+                    for metric in DEresults.test_results[0].metrics_data:
+                        print_on_gui(f"{metric.name}: {metric.score:.2f}")
+                        print_on_gui(f"Reasoning: {metric.reason}")
 
 
             print_on_gui(f"\nAnswer: {answer}")
 
-            if answerValid:
-                print_on_gui("\n--- Evaluation Results ---")
-                for metric in DEresults.test_results[0].metrics_data:
-                    print_on_gui(f"{metric.name}: {metric.score:.2f}")
-                    print_on_gui(f"Reasoning: {metric.reason}")
 
 
-            print_on_gui("\n--- Sources ---")
-            for i, doc in enumerate(retrieved_docs, 1):
-                filename = doc.meta.get("filename", "Unknown")
-                preview = doc.content[:200].replace('\n', ' ')
-                print_on_gui(f"{i}. {filename}: {preview}...")
+            if sourceChecked.get() == 1:
+                print_on_gui("\n--- Sources ---")
+                for i, doc in enumerate(retrieved_docs, 1):
+                    filename = doc.meta.get("filename", "Unknown")
+                    preview = doc.content[:200].replace('\n', ' ')
+                    print_on_gui(f"{i}. {filename}: {preview}...")
 
 
             
@@ -301,10 +308,19 @@ def main():
     root.after(4000, rag_load)
     root.mainloop()
 
+def start_loop(event):
+    button_pressed.set("True")
+
+def on_close():
+    global RUNNING
+    RUNNING = False
+    root.quit()
+    root.destroy()
+
 #tkinter GUI setup
 root = tk.Tk()
 root.title("GuardRag")
-root.minsize(600, 300)
+root.minsize(600, 400)
 root.geometry("300x300+300+250")
 
 upload_button = tk.Button(root, text="New File", command=get_file)
@@ -315,11 +331,24 @@ entry = tk.Entry(root, width=70)
 entry.pack(padx=10, pady=10, anchor="n", fill="x")
 
 button_pressed = tk.StringVar()
-btn = tk.Button(root, text="submit", command=lambda: button_pressed.set("true"))
+btn = tk.Button(root, text="submit", command=lambda: button_pressed.set("True"))
 btn.pack(anchor="n")
+
+entry.bind("<Return>", start_loop)
 
 txt = scrolledtext.ScrolledText(root, height=15, wrap="word")
 txt.pack(padx=10, pady=10, side=tk.BOTTOM, expand=True, anchor="n", fill="both")
+
+evalChecked = tk.IntVar()
+runEval = tk.Checkbutton(root, text="Run DeepEval Check", variable=evalChecked)
+runEval.pack(anchor="w")
+
+sourceChecked = tk.IntVar()
+showSources = tk.Checkbutton(root, text="Show Sources", variable=sourceChecked)
+showSources.pack(anchor="w")
+
+
+root.protocol("WM_DELETE_WINDOW", on_close)
 
 if __name__ == "__main__":
     main()
