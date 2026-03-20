@@ -1,81 +1,107 @@
-# GuardRag — Project Explanation
+# GuardRag
 
 ## Project Overview
-**GuardRag** is a locally run Retrieval-Augmented Generation (RAG) system designed to answer questions over a private document corpus. The system also includes an evaluation and CI pipeline that automatically benchmarks model responses against prior outputs. 
+GuardRag is a local Retrieval-Augmented Generation (RAG) application that lets users upload private files and ask questions grounded in those files.
 
 The system:
+- Ingests and indexes `.pdf`, `.docx`, and `.txt` documents locally.
+- Performs semantic retrieval with Haystack.
+- Generates responses through local Ollama models.
+- Shows source-backed answers in a simple desktop GUI.
 
-- Ingests and indexes structured and unstructured documents locally
-- Performs semantic search with metadata constraints
-- Generates evidence-grounded responses using a local LLM
-- Provides source attribution for all answers
-- Automatically evaluates system behavior via CI
-- Runs fully offline with optional containerization
+Technology summary:
+- Python: 3.10+
+- LLM runtime: Ollama (`mistral:7b` default)
+- RAG framework: Haystack
+- API framework: FastAPI (scaffolded)
+- Optional container path: Docker
 
-Technology Stack (Summary):
+## Installation
 
-- Python Version: 3.14
-- LLM: Ollama (pull Mistral 7B)
-- RAG: Haystack
-- Backend API: FastAPI (Python)
-- Evaluation: Custom metrics, MLflow (optional)
-- CI: GitHub Actions
-- Storage: SQLite or DuckDB
-- Containerization: Docker (optional)
+### Prerequisites
+- Python 3.10+
+- Ollama installed: `https://ollama.com/download`
 
+### One-time setup (Windows)
+Run:
 
----
+```powershell
+.\setup.ps1
+```
 
-# Instructions
-### Prerequisites:
+`setup.ps1` calls the consolidated installer at `scripts/install.py`, which:
+- Creates/reuses `.venv`
+- Installs dependencies from `setup_materials/requirements.txt`
+- Creates `.env` from `.env.example` (or a fallback)
+- Creates standard runtime directories (`docs`, `data`, `logs`, `config`)
+- Pulls `mistral:7b` when Ollama is installed and running
 
-Python 3.14 installed
+Direct usage:
 
-## Setup (One-time)
+```bash
+python scripts/install.py --model mistral:7b
+```
 
-Run the setup script:
+## Run GuardRag
 
-powershell   
-```.\setup.ps1```
+Activate the virtual environment:
 
-Ihis will check if Ollama is already on your computer and pull Mistral 7B. Then it will create a virtual environment and install all dependencies (~5-10 minutes)
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Start the desktop GUI:
+
+```powershell
+python .\pipelines\rag_pipeline.py
+```
+
+Type `quit` in the prompt box to exit the app.
+
+## Build Windows Wizard Installer
+
+The repo now includes an Inno Setup based wizard installer scaffold.
+
+### Prerequisites
+- Inno Setup 6 (`ISCC.exe`) installed
+- Python 3.10+
+
+### Build command
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\build_installer.ps1
+```
+
+If `ISCC.exe` is missing, install Inno Setup automatically first:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\install_inno_setup.ps1
+```
+
+Generated output:
+- `installer/windows/dist/GuardRag-Setup.exe`
+
+### Installer behavior
+- Copies the project into `Program Files\GuardRag`
+- Lets user choose whether to pull `mistral:7b` during install
+- Lets user choose whether to launch GuardRag after install
+- Runs post-install orchestration via `installer/windows/post_install.ps1`
+- Writes post-install logs to `logs/installer-post-install.log`
 
 ## Usage
-
-Add your documents to the docs/ folder. 
-
-Currently supports .pdf, .docx, and .txt files
-
-## Run the pipeline:
-
-## Activate the virtual environment (if not already active):
-
-powershell   
-```.\venv\Scripts\Activate.ps1```
-
-Note: (venv) should appear in front of file path in terminal.
-
-Use ```deactivate``` to stop virtual environment.
-
-powershell   
-```python .\pipelines\rag_pipeline.py```
-
-Enter "quit" to exit.
-
-
----
+- Click `New File` to attach files.
+- Ask questions about the uploaded documents.
+- The app will re-index newly added files automatically.
 
 ## Repository Structure
-
-- `data/` — raw inputs, processed chunks, evaluation datasets  
-- `evaluation/` — metrics, datasets, evaluators, reports  
-- `api/` — rag interface
-- `pipelines/` — Haystack rag, evaluation
-- `ci/`, `.github/` — CI logic and workflows  
-- `docs/` — hold user files
-- `project_docs/` — project documentation (sprint plan, design-decisions, etc)
-- `setup_materials/` — pull mistral script and requirements
-
-### VM
-Email Michael Craig (michaelcraig@weber.edu) with requests and cc Brad Peterson as well. Make sure to explain it's for 4760 for the semester.
+- `api/` - API scaffolding
+- `ci/` - evaluation thresholds/checks
+- `data/` - evaluation and runtime data
+- `docs/` - user-uploaded source files
+- `evaluation/` - evaluator + metrics scaffolding
+- `pipelines/` - RAG pipeline and evaluation runners
+- `project_docs/` - architecture and design notes
+- `installer/windows/` - Inno Setup wizard and build scripts
+- `scripts/` - consolidated install tooling
+- `setup_materials/` - installer dependency manifests
 

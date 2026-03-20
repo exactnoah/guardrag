@@ -1,5 +1,6 @@
 # Python
 venv/
+.venv/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -24,3 +25,8 @@ Thumbs.db
 
 # Environment variables
 .env
+
+# Installer/runtime artifacts
+config/install.info
+logs/
+.ollama/
