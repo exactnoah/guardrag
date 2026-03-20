@@ -4,6 +4,7 @@ Requires: Ollama running locally with mistral model pulled
 """
 
 import os
+import importlib
 from pathlib import Path
 from haystack import Pipeline, Document
 from haystack.document_stores.in_memory import InMemoryDocumentStore
@@ -13,7 +14,6 @@ from haystack.components.retrievers.in_memory import InMemoryEmbeddingRetriever
 from haystack.components.builders import PromptBuilder
 from haystack_integrations.components.generators.ollama import OllamaGenerator
 from pypdf import PdfReader
-from docx import Document as Docxument
 
 #tkinter gui
 import tkinter as tk
@@ -34,8 +34,11 @@ indexed_files = set()
 #GUI functions
 def get_file(event=None):
     filepath = filedialog.askopenfilename()
+    if not filepath:
+        return
+    DOCS_DIR.mkdir(parents=True, exist_ok=True)
     filename = os.path.basename(filepath)
-    shutil.copy(filepath, f"./docs/{filename}")
+    shutil.copy(filepath, DOCS_DIR / filename)
     print('Selected: ', filename)
     print_on_gui(f"{filename} added to Docs Folder. Click submit to index and add to pipeline." )
 
@@ -78,7 +81,8 @@ def load_documents(docs_dir: Path, only_new=False) -> list[Document]:
                 text_parts = [page.extract_text() for page in reader.pages]
                 content = '\n'.join(text_parts)
             else: # docx
-                document = Docxument(file_path)
+                docx_module = importlib.import_module("docx")
+                document = docx_module.Document(file_path)
                 content = '\n'.join(para.text for para in document.paragraphs)
             
             if content.strip(): # check if empty
