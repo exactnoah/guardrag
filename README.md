@@ -93,6 +93,7 @@ Optional smoke test on a clean machine/VM:
 - Run `GuardRag-Setup.exe`
 - Complete wizard selections
 - Confirm post-install log at `logs/installer-post-install.log`
+- Confirm app launch works (if launch option selected)
 
 ### Installer behavior
 - Copies the project into `Program Files\GuardRag`
