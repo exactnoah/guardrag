@@ -58,7 +58,7 @@ def print_error(msg: str) -> None:
 
 def build_paths(install_root: Path) -> InstallPaths:
     req_candidates = [
-        PROJECT_ROOT / "setup_materials" / "requirements.txt",
+        PROJECT_ROOT / "installer" / "windows" / "requirements.txt",
         PROJECT_ROOT / "requirements.txt",
     ]
     requirements_file = next((p for p in req_candidates if p.exists()), req_candidates[0])
