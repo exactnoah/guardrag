@@ -6,6 +6,9 @@ Requires: Ollama running locally with mistral model pulled
 import os
 import importlib
 from pathlib import Path
+import shutil
+import threading
+
 from haystack import Pipeline, Document
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 from haystack.components.writers import DocumentWriter
@@ -25,10 +28,9 @@ from deepeval.metrics import FaithfulnessMetric, AnswerRelevancyMetric
 
 
 #tkinter gui
-import tkinter as tk
-from tkinter import scrolledtext
-from tkinter import filedialog
-import shutil
+from gui import GUI
+
+gui = None
 
 # Configuration
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -40,33 +42,118 @@ TOP_K = 4  # Number of documents to retrieve
 NEW_DOC = False
 indexed_files = set()
 RUNNING = True
+rag_pipeline = None
+indexing_pipeline = None
 
 #GUI functions
-def get_file(event=None):
-    filepath = filedialog.askopenfilename()
+def get_file(filepath):
+    global NEW_DOC
+
+    #filepath = filedialog.askopenfilename()
     if not filepath:
         return
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
     filename = os.path.basename(filepath)
     shutil.copy(filepath, DOCS_DIR / filename)
     print('Selected: ', filename)
-    print_on_gui(f"{filename} added to Docs Folder. Click submit to index and add to pipeline." )
+    print_on_gui(f"{filename} added to Docs Folder. Click submit to index and add to pipeline.")
 
-    global NEW_DOC
     NEW_DOC = True
 
 def print_on_gui(*args, sep=" ", end="\n"):
     text = sep.join(map(str, args)) + end
     print(text)
 
-    txt.config(state="normal")
-    txt.insert("end", text)
-    txt.config(state="disabled")
-    txt.see("end")
-    root.update_idletasks()
+    if gui:
+        gui.print(text)
+
+def handle_submit(question, run_eval, show_sources):
+    global rag_pipeline, NEW_DOC
 
 
+    if NEW_DOC:
+        print_on_gui("\nNew doc detected, indexing and appending...")
+        new_documents = load_documents(DOCS_DIR, only_new=True)
 
+        if new_documents:
+                indexing_pipeline.run({"splitter": {"documents": new_documents}})
+                print_on_gui("\nNew Document Added")
+        else:
+                print_on_gui("No new documents found")
+        NEW_DOC = False
+    
+    if not question or question == "":
+        gui.root.after(500, gui.delete_bar)
+        gui.submit["state"] = "normal"
+        gui.entry["state"] = "normal"
+        return
+    
+    if question.lower() in ['quit', 'exit', 'q']:
+        print_on_gui("Goodbye!")
+        gui.after(3000, gui.destroy)
+        return
+    
+    print_on_gui("\nThinking...")
+    result = rag_pipeline.run({
+        "text_embedder": {"text": question},
+        "prompt_builder": {"question": question}
+    },
+        include_outputs_from=["retriever"]
+    )
+
+    answer = result["llm"]["replies"][0]
+    retrieved_docs = result["retriever"]["documents"]
+
+    if run_eval and retrieved_docs:
+        print_on_gui(f"\n\nRe-Evaluating Answer...")
+
+        testcase = LLMTestCase(
+            input=question,
+            actual_output=answer,
+            retrieval_context = [doc.content for doc in retrieved_docs]
+            )
+        answerValid = True
+                
+
+        DEresults = evaluate(
+            test_cases=[testcase],
+            metrics=dEMetrics
+        )
+
+        metrics_results = DEresults.test_results[0].metrics_data
+
+                
+        print_on_gui("\n--- Evaluation Results ---")
+        #check if factually correct according to retrieved docs
+        print_on_gui(f"\n{metrics_results[0].name}:")
+        if metrics_results[0].score < 0.75: 
+            print_on_gui("\nLikely Halucinations detected. Please try again with a more specific question or after adding relevant files.")
+            answerValid = False
+        print_on_gui(f"Score: {metrics_results[0].score} Reasoning: {metrics_results[0].reason}")
+                    
+
+        #check if answer actually answers question
+        print_on_gui(f"\n{metrics_results[1].name}:")
+        if metrics_results[1].score < 0.75: 
+            print_on_gui("\nGenerated Answer may not be relevant to asked question. Please try again with a more specific question or after adding relevant files.")
+            answerValid = False
+        print_on_gui(f"Score: {metrics_results[1].score} Reasoning: {metrics_results[1].reason}")
+
+    print_on_gui(answer)
+        
+    if show_sources and retrieved_docs:
+        print_on_gui("\n--- Sources ---")
+        for i, doc in enumerate(retrieved_docs, 1):
+            filename = doc.meta.get("filename", "Unknown")
+            preview = doc.content[:200].replace('\n', ' ')
+            print_on_gui(f"{i}. {filename}: {preview}...")
+
+    gui.submit["state"] = "normal"
+    gui.entry["state"] = "normal"
+    
+    gui.delete_bar()
+
+    print_on_gui("\nNew Question: ")
 
 
 def load_documents(docs_dir: Path, only_new=False) -> list[Document]:
@@ -164,7 +251,7 @@ def create_rag_pipeline(document_store: InMemoryDocumentStore):
 
 
 def rag_load():
-    global NEW_DOC, RUNNING
+    global NEW_DOC, RUNNING, rag_pipeline, indexing_pipeline, judge_model, dEMetrics
 
     judge_model = OllamaModel( #declare Ollama as judge
         model=OLLAMA_MODEL,
@@ -174,6 +261,9 @@ def rag_load():
         FaithfulnessMetric(model=judge_model),
         AnswerRelevancyMetric(model=judge_model),
     ]
+    
+    gui.update_bar(10)
+    
     print_on_gui("=" * 60)
     print_on_gui("Haystack + Ollama RAG Pipeline")
     print_on_gui("=" * 60)
@@ -181,22 +271,32 @@ def rag_load():
     # Initialize document store
     document_store = InMemoryDocumentStore()
     
+    gui.update_bar(20) #30%
     # Load and index documents
     print_on_gui("\n[1/3] Loading documents...")
     documents = load_documents(DOCS_DIR, only_new=False)
     
+    
+
     if not documents:
         print_on_gui("\nNo documents found. Add .pdf, .docx, or .txt files to ../docs/ directory.")
         return
     
     print_on_gui(f"\n[2/3] Indexing documents (this may take a minute on first run)...")
+    gui.update_bar(10) #40%
     indexing_pipeline = create_indexing_pipeline(document_store)
+    
+
     indexing_pipeline.run({"splitter": {"documents": documents}})
     print_on_gui(f"✓ Indexed {document_store.count_documents()} documents")
     
+    gui.update_bar(30) #70%
+
     # Create RAG pipeline
     print_on_gui("\n[3/3] Creating RAG pipeline...")
     rag_pipeline = create_rag_pipeline(document_store)
+    gui.update_bar(29.9) #100%
+
     print_on_gui("✓ Pipeline ready!")
     
     # Interactive Q&A loop
@@ -205,154 +305,18 @@ def rag_load():
     print_on_gui("=" * 60 + "\n")
 
 
+    print_on_gui("\nQuestion: ")
+
+    gui.delete_bar()
     
-    while RUNNING:
-        button_pressed.set("False")
-        print_on_gui("\nQuestion: ")
-
-        while button_pressed.get() != "True" and RUNNING:
-            root.update()
-
-        #catch for closing via gui
-        if not RUNNING:
-            break
-
-        question = entry.get().strip()
-        print_on_gui(question)
-        entry.delete(0, tk.END)
-
-        if NEW_DOC:
-            print_on_gui("\nNew doc detected, indexing and appending...")
-            new_documents = load_documents(DOCS_DIR, only_new=True)
-
-            if new_documents:
-                indexing_pipeline.run({"splitter": {"documents": new_documents}})
-                print_on_gui("\nNew Document Added")
-            else:
-                print_on_gui("No new documents found")
-            NEW_DOC = False
-        
-        if question.lower() in ['quit', 'exit', 'q']:
-            print_on_gui("Goodbye!")
-            root.after(3000, root.destroy)
-            break
-        
-        if not question:
-            continue
-        
-        print_on_gui("\nThinking...")
-        result = rag_pipeline.run({
-            "text_embedder": {"text": question},
-            "prompt_builder": {"question": question}
-        },
-            include_outputs_from=["retriever"]
-        )
-        
-        answer = result["llm"]["replies"][0]
-
-
-
-        
-        retrieved_docs = result["retriever"]["documents"]
-        
-        # Show sources (if available in result)
-        if retrieved_docs:
-            if evalChecked == 1: 
-                testcase = LLMTestCase(
-                    input=question,
-                    actual_output=answer,
-                    retrieval_context = [doc.content for doc in retrieved_docs]
-                    )
-                answerValid = True
-                
-                print_on_gui(f"\n\nRe-Evaluating Answer...")
-
-                DEresults = evaluate(
-                    test_cases=[testcase],
-                    metrics=dEMetrics
-                )
-
-                metrics_results = DEresults.test_results[0].metrics_data
-
-                #check if factually correct according to retrieved docs
-                if metrics_results[0].score < 0.75: 
-                    print_on_gui("\nLikely Halucinations detected. Please try again with a more specific question or after adding relevant files.")
-                    print_on_gui(f"Reasoning: {metrics_results[0].reason}")
-                    answerValid = False
-
-                #check if answer actually answers question
-                if metrics_results[1].score < 0.75: 
-                    print_on_gui("\nGenerated Answer may not be relevant to asked question. Please try again with a more specific question or after adding relevant files.")
-                    print_on_gui(f"Reasoning: {metrics_results[1].reason}")
-                    answerValid = False
-
-                if answerValid:
-                    print_on_gui("\n--- Evaluation Results ---")
-                    for metric in DEresults.test_results[0].metrics_data:
-                        print_on_gui(f"{metric.name}: {metric.score:.2f}")
-                        print_on_gui(f"Reasoning: {metric.reason}")
-
-
-            print_on_gui(f"\nAnswer: {answer}")
-
-
-
-            if sourceChecked.get() == 1:
-                print_on_gui("\n--- Sources ---")
-                for i, doc in enumerate(retrieved_docs, 1):
-                    filename = doc.meta.get("filename", "Unknown")
-                    preview = doc.content[:200].replace('\n', ' ')
-                    print_on_gui(f"{i}. {filename}: {preview}...")
-
-
-            
-
 def main():
+    global gui
+    gui = GUI(on_submit=handle_submit, on_upload=get_file)
     print_on_gui("Loading... \n\n")
-    root.after(4000, rag_load)
-    root.mainloop()
+    gui.progressive_bar()
 
-def start_loop(event):
-    button_pressed.set("True")
-
-def on_close():
-    global RUNNING
-    RUNNING = False
-    root.quit()
-    root.destroy()
-
-#tkinter GUI setup
-root = tk.Tk()
-root.title("GuardRag")
-root.minsize(600, 400)
-root.geometry("300x300+300+250")
-
-upload_button = tk.Button(root, text="New File", command=get_file)
-upload_button.pack(anchor="w")
-
-userInput = tk.StringVar()
-entry = tk.Entry(root, width=70)
-entry.pack(padx=10, pady=10, anchor="n", fill="x")
-
-button_pressed = tk.StringVar()
-btn = tk.Button(root, text="submit", command=lambda: button_pressed.set("True"))
-btn.pack(anchor="n")
-
-entry.bind("<Return>", start_loop)
-
-txt = scrolledtext.ScrolledText(root, height=15, wrap="word")
-txt.pack(padx=10, pady=10, side=tk.BOTTOM, expand=True, anchor="n", fill="both")
-
-evalChecked = tk.IntVar()
-runEval = tk.Checkbutton(root, text="Run DeepEval Check", variable=evalChecked)
-runEval.pack(anchor="w")
-
-sourceChecked = tk.IntVar()
-showSources = tk.Checkbutton(root, text="Show Sources", variable=sourceChecked)
-showSources.pack(anchor="w")
-
-
-root.protocol("WM_DELETE_WINDOW", on_close)
+    gui.root.after(4000, rag_load)
+    gui.run()
 
 if __name__ == "__main__":
     main()
