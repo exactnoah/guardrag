@@ -20,6 +20,7 @@ from tkinter import scrolledtext, filedialog
 import shutil
 
 from evaluation import run_evaluation
+from logger import log_entry, start_eval_log
 
 # Configuration
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -235,10 +236,17 @@ def rag_load():
         retrieved_docs = result["retriever"]["documents"]
 
         if retrieved_docs:
+            sources = [doc.meta.get("filename", "Unknown") for doc in retrieved_docs]
+
             if evalChecked.get() == 1:
+                #write query and response to eval log
+                start_eval_log(question, answer, sources)
                 run_evaluation(question, answer, retrieved_docs, print_on_gui)
 
             print_on_gui(f"\nAnswer: {answer}")
+
+            #log the query, response, and sources
+            log_entry(question, answer, sources)
 
             if sourceChecked.get() == 1:
                 print_on_gui("\n--- Sources ---")
