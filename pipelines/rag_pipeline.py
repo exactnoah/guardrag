@@ -196,6 +196,8 @@ def rag_load():
     
     
     gui.update_bar(10)
+
+    gui.load_logs()
     
     print_on_gui("=" * 60)
     print_on_gui("Haystack + Ollama RAG Pipeline")
@@ -214,15 +216,19 @@ def rag_load():
         print_on_gui("\nNo documents found. Add .pdf, .docx, or .txt files to ../docs/ directory.")
         return
 
-    print_on_gui(f"\n[2/3] Indexing documents (this may take a minute on first run)...")
     gui.update_bar(10) #40%
+
+    print_on_gui(f"\n[2/3] Indexing documents (this may take a minute on first run)...")
     indexing_pipeline = create_indexing_pipeline(document_store)
     
+
+    gui.update_bar(10) #50%
 
     indexing_pipeline.run({"splitter": {"documents": documents}})
     print_on_gui(f"✓ Indexed {document_store.count_documents()} documents")
     
-    gui.update_bar(30) #70%
+    gui.update_bar(20) #70%
+
 
     # Create RAG pipeline
     print_on_gui("\n[3/3] Creating RAG pipeline...")
