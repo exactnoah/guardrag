@@ -9,6 +9,8 @@ from pathlib import Path
 import shutil
 import threading
 
+import evaluation
+
 from haystack import Pipeline, Document
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 from haystack.components.writers import DocumentWriter
