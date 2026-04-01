@@ -10,6 +10,7 @@ import shutil
 import threading
 
 from evaluation import run_evaluation
+from logger import log_entry, start_eval_log
 
 from haystack import Pipeline, Document
 from haystack.document_stores.in_memory import InMemoryDocumentStore
@@ -99,8 +100,12 @@ def handle_submit(question, run_eval, show_sources):
 
     answer = result["llm"]["replies"][0]
     retrieved_docs = result["retriever"]["documents"]
+    sources = [doc.meta.get("filename", "Unknown") for doc in retrieved_docs]
+
 
     if run_eval and retrieved_docs:
+        #write query and response to eval log
+        start_eval_log(question, answer, sources)
         run_evaluation(question, answer, retrieved_docs, print_on_gui)
 
     print_on_gui(answer)
