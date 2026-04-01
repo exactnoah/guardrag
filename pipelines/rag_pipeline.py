@@ -9,7 +9,7 @@ from pathlib import Path
 import shutil
 import threading
 
-import evaluation
+from evaluation import run_evaluation
 
 from haystack import Pipeline, Document
 from haystack.document_stores.in_memory import InMemoryDocumentStore
@@ -107,39 +107,7 @@ def handle_submit(question, run_eval, show_sources):
     retrieved_docs = result["retriever"]["documents"]
 
     if run_eval and retrieved_docs:
-        print_on_gui(f"\n\nRe-Evaluating Answer...")
-
-        testcase = LLMTestCase(
-            input=question,
-            actual_output=answer,
-            retrieval_context = [doc.content for doc in retrieved_docs]
-            )
-        answerValid = True
-                
-
-        DEresults = evaluate(
-            test_cases=[testcase],
-            metrics=dEMetrics
-        )
-
-        metrics_results = DEresults.test_results[0].metrics_data
-
-                
-        print_on_gui("\n--- Evaluation Results ---")
-        #check if factually correct according to retrieved docs
-        print_on_gui(f"\n{metrics_results[0].name}:")
-        if metrics_results[0].score < 0.75: 
-            print_on_gui("\nLikely Halucinations detected. Please try again with a more specific question or after adding relevant files.")
-            answerValid = False
-        print_on_gui(f"Score: {metrics_results[0].score} Reasoning: {metrics_results[0].reason}")
-                    
-
-        #check if answer actually answers question
-        print_on_gui(f"\n{metrics_results[1].name}:")
-        if metrics_results[1].score < 0.75: 
-            print_on_gui("\nGenerated Answer may not be relevant to asked question. Please try again with a more specific question or after adding relevant files.")
-            answerValid = False
-        print_on_gui(f"Score: {metrics_results[1].score} Reasoning: {metrics_results[1].reason}")
+        run_evaluation(question, answer, answer, gui.print_on_gui)
 
     print_on_gui(answer)
         
