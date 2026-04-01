@@ -22,11 +22,6 @@ from haystack.components.preprocessors import DocumentSplitter
 
 from pypdf import PdfReader
 
-from deepeval.models import OllamaModel
-from deepeval import evaluate
-from deepeval.test_case import LLMTestCase
-from deepeval.metrics import FaithfulnessMetric, AnswerRelevancyMetric
-
 
 
 #tkinter gui
@@ -107,7 +102,7 @@ def handle_submit(question, run_eval, show_sources):
     retrieved_docs = result["retriever"]["documents"]
 
     if run_eval and retrieved_docs:
-        run_evaluation(question, answer, answer, gui.print_on_gui)
+        run_evaluation(question, answer, retrieved_docs, print_on_gui)
 
     print_on_gui(answer)
         
@@ -221,16 +216,9 @@ def create_rag_pipeline(document_store: InMemoryDocumentStore):
 
 
 def rag_load():
-    global NEW_DOC, RUNNING, rag_pipeline, indexing_pipeline, judge_model, dEMetrics
+    global NEW_DOC, RUNNING, rag_pipeline, indexing_pipeline
 
-    judge_model = OllamaModel( #declare Ollama as judge
-        model=OLLAMA_MODEL,
-        base_url="http://localhost:11434"
-    )   
-    dEMetrics = [
-        FaithfulnessMetric(model=judge_model),
-        AnswerRelevancyMetric(model=judge_model),
-    ]
+    
     
     gui.update_bar(10)
     
