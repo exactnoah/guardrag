@@ -23,6 +23,9 @@ Thumbs.db
 # Haystack cache
 .haystack/
 
+# Deepeval cache
+.deepeval/
+
 # Environment variables
 .env
 

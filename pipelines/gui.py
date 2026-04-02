@@ -7,6 +7,7 @@ import threading
 from pathlib import Path
 from logger import EVAL_LOG
 from logger import QUERY_LOG
+from evaluation import set_metrics
 
 
 class GUI:
@@ -19,9 +20,11 @@ class GUI:
 
         self.mainFrame = tk.Frame(self.tabControl)
         self.logFrame = tk.Frame(self.tabControl)
+        self.evalFrame = tk.Frame(self.tabControl)
 
         self.tabControl.add(self.mainFrame, text='Main', padding=5)
         self.tabControl.add(self.logFrame, text='Logs')
+        self.tabControl.add(self.evalFrame, text='Evaluation')
         self.tabControl.pack(expand=1, fill="both")
 
         #mainFrame
@@ -57,6 +60,31 @@ class GUI:
         
         self.txt.config(state="disabled")
         self.txtLogQ.config(state="disabled")
+
+        #evalFrame
+        tk.Label(self.evalFrame, text="Faithfulness Threshold").pack(anchor="w", padx=10, pady=(10,0))
+        self.faithfulnessScale = tk.Scale(self.evalFrame, from_=0, to=1, resolution=0.05, orient="horizontal", length=300)
+
+        self.faithfulnessScale.set(0.75)
+        self.faithfulnessScale.pack(anchor="w", padx=10)
+        faithfulness_hint = tk.Frame(self.evalFrame, width=300, height=30)
+        faithfulness_hint.pack(anchor="w", padx=10)
+        faithfulness_hint.pack_propagate(False)
+        tk.Label(faithfulness_hint, text="← More hallucinations allowed", fg="gray").pack(side="left")
+        tk.Label(faithfulness_hint, text="Stricter →", fg="gray").pack(side="right")
+
+        tk.Label(self.evalFrame, text="Answer Relevancy Threshold").pack(anchor="w", padx=10, pady=(10,0))
+        self.relevancyScale = tk.Scale(self.evalFrame, from_=0, to=1, resolution=0.05, orient="horizontal", length=300)
+
+        self.relevancyScale.set(0.75)
+        self.relevancyScale.pack(anchor="w", padx=10)
+        relevancy_hint = tk.Frame(self.evalFrame, width=300, height=30)
+        relevancy_hint.pack(anchor="w", padx=10)
+        relevancy_hint.pack_propagate(False)
+        tk.Label(relevancy_hint, text="← Off-topic answers allowed", fg="gray").pack(side="left")
+        tk.Label(relevancy_hint, text="Stricter →", fg="gray").pack(side="right")
+
+        tk.Button(self.evalFrame, text="Apply", command=self.apply_thresholds).pack(anchor="w", padx=10, pady=10)
 
 
 
@@ -123,3 +151,10 @@ class GUI:
 
     def delete_bar(self):
         self.progressbar.destroy()
+    
+
+    def apply_thresholds(self):
+        set_metrics(
+            faithfulness=self.faithfulnessScale.get(),
+            relevancy=self.relevancyScale.get()
+        )
