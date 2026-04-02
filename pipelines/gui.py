@@ -23,6 +23,7 @@ class GUI:
         self.tabControl.add(self.mainFrame, text='Main', padding=5)
         self.tabControl.add(self.logFrame, text='Logs')
         self.tabControl.pack(expand=1, fill="both")
+        self.tabControl.pack_propagate(False)
 
         #mainFrame
         self.on_submit = on_submit
@@ -52,11 +53,22 @@ class GUI:
                        variable=self.sourceChecked).pack(anchor="w", side="left", pady=5)
         
         #logFrame
-        self.txtLogQ = scrolledtext.ScrolledText(self.logFrame, height=15, wrap="word")
-        self.txtLogQ.pack(padx=10, pady=10, expand=True, fill="both")
+        self.logContainer = tk.Frame(self.logFrame)
+        self.logContainer.pack(expand=True, fill="both")
+
+
+
+        self.txtLogQ = scrolledtext.ScrolledText(self.logContainer, height=15, wrap="word", width=40)
+        self.txtLogQ.pack(side="left", expand=True, fill="both")
+
+        self.txtLogE = scrolledtext.ScrolledText(self.logContainer, height=15, wrap="word", width=40)
+        self.txtLogE.pack(side="left", expand=True, fill="both")
         
         self.txt.config(state="disabled")
         self.txtLogQ.config(state="disabled")
+        self.txtLogE.config(state="disabled")
+
+        self.logContainer.pack_propagate(False)
 
 
 
@@ -65,8 +77,16 @@ class GUI:
         if os.path.isfile(QUERY_LOG):
             with open(QUERY_LOG) as f:
                 self.txtLogQ.config(state="normal")
+                self.txtLogQ.delete("1.0", tk.END)
                 self.txtLogQ.insert("end", f.read() + "\n")
                 self.txtLogQ.config(state="disabled")
+                self.root.update_idletasks()
+        if os.path.isfile(EVAL_LOG):
+            with open(EVAL_LOG) as f:
+                self.txtLogE.config(state="normal")
+                self.txtLogE.delete("1.0", tk.END)
+                self.txtLogE.insert("end", f.read() + "\n")
+                self.txtLogE.config(state="disabled")
                 self.root.update_idletasks()
 
     def upload(self):

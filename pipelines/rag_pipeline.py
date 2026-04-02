@@ -109,6 +109,9 @@ def handle_submit(question, run_eval, show_sources):
         run_evaluation(question, answer, retrieved_docs, print_on_gui)
 
     print_on_gui(answer)
+    #log the query, response, and sources
+    log_entry(question, answer, sources)
+    gui.load_logs()
         
     if show_sources and retrieved_docs:
         print_on_gui("\n--- Sources ---")
