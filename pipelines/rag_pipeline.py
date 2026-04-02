@@ -256,11 +256,11 @@ def rag_load():
     
 def main():
     global gui
-    gui = GUI(on_submit=handle_submit, on_upload=get_file)
+    gui = GUI(on_submit=handle_submit, on_upload=get_file, on_start=rag_load)
     print_on_gui("Loading... \n\n")
     gui.progressive_bar()
 
-    gui.root.after(4000, rag_load)
+    gui.root.after(4000, gui.start_load)
     gui.run()
 
 if __name__ == "__main__":

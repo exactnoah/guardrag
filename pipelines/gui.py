@@ -10,7 +10,7 @@ from logger import QUERY_LOG
 
 
 class GUI:
-    def __init__(self, on_submit, on_upload):
+    def __init__(self, on_submit, on_upload, on_start):
         self.root = tk.Tk()
         self.root.title("GuardRag")
         self.root.minsize(600, 400)
@@ -28,6 +28,7 @@ class GUI:
         #mainFrame
         self.on_submit = on_submit
         self.on_upload = on_upload
+        self.on_start = on_start
 
         self.upload_button = tk.Button(self.mainFrame, text="New File", command=self.upload)
         self.upload_button.pack(anchor="w")
@@ -123,7 +124,12 @@ class GUI:
         self.txt.config(state="disabled")
         self.root.update_idletasks()
 
+    def start_load(self):
+        t = threading.Thread(target= self.on_start)
+        t.start()
+
     def run(self):
+        
         self.root.mainloop()
 
     def progressive_bar(self):
