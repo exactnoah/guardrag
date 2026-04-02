@@ -2,8 +2,11 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import scrolledtext, filedialog
 
+import os
 import threading
 from pathlib import Path
+from logger import EVAL_LOG
+from logger import QUERY_LOG
 
 
 class GUI:
@@ -49,21 +52,22 @@ class GUI:
                        variable=self.sourceChecked).pack(anchor="w", side="left", pady=5)
         
         #logFrame
-        self.txtLog = scrolledtext.ScrolledText(self.logFrame, height=15, wrap="word")
-        self.txtLog.pack(padx=10, pady=10, expand=True, fill="both")
+        self.txtLogQ = scrolledtext.ScrolledText(self.logFrame, height=15, wrap="word")
+        self.txtLogQ.pack(padx=10, pady=10, expand=True, fill="both")
         
         self.txt.config(state="disabled")
-        self.txtLog.config(state="disabled")
+        self.txtLogQ.config(state="disabled")
 
 
 
 #functions
     def load_logs(self):
-        logfile = "TO DO ===="
-        self.txtLog.config(state="normal")
-        self.txtLog.insert("end", logfile + "\n")
-        self.txtLog.config(state="disabled")
-        self.root.update_idletasks()
+        if os.path.isfile(QUERY_LOG):
+            with open(QUERY_LOG) as f:
+                self.txtLogQ.config(state="normal")
+                self.txtLogQ.insert("end", f.read() + "\n")
+                self.txtLogQ.config(state="disabled")
+                self.root.update_idletasks()
 
     def upload(self):
         filepath = filedialog.askopenfilename()
@@ -93,10 +97,10 @@ class GUI:
         
 
     def print(self, text):
-        self.txtLog.config(state="normal")
+        self.txt.config(state="normal")
         self.txt.insert("end", text + "\n")
         self.txt.see("end")
-        self.txtLog.config(state="disabled")
+        self.txt.config(state="disabled")
         self.root.update_idletasks()
 
     def run(self):
