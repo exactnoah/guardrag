@@ -15,15 +15,18 @@ class GUI:
         self.root.title("GuardRag")
         self.root.minsize(600, 400)
 
+        #tabs initialization
+
         self.tabControl = ttk.Notebook(self.root)
 
         self.mainFrame = tk.Frame(self.tabControl)
         self.logFrame = tk.Frame(self.tabControl)
+        self.docsFrame = tk.Frame(self.tabControl)
 
         self.tabControl.add(self.mainFrame, text='Main', padding=5)
-        self.tabControl.add(self.logFrame, text='Logs')
+        self.tabControl.add(self.logFrame, text='Logs', padding=5)
+        self.tabControl.add(self.docsFrame, text='Docs', padding=5)
         self.tabControl.pack(expand=1, fill="both")
-        self.tabControl.pack_propagate(False)
 
         #mainFrame
         self.on_submit = on_submit
@@ -43,6 +46,7 @@ class GUI:
 
         self.txt = scrolledtext.ScrolledText(self.mainFrame, height=15, wrap="word")
         self.txt.pack(padx=10, pady=10, expand=True, fill="both")
+        self.txt.config(state="disabled")
 
         self.evalChecked = tk.IntVar()
         self.sourceChecked = tk.IntVar()
@@ -57,23 +61,46 @@ class GUI:
         self.logContainer = tk.Frame(self.logFrame)
         self.logContainer.pack(expand=True, fill="both")
 
+        self.logContainer.columnconfigure(0, weight=1)
+        self.logContainer.columnconfigure(1, weight=1)
+        self.logContainer.rowconfigure(1, weight=1)
 
+        self.queryLabel = tk.Label(self.logContainer, text="Query Log", font=("Arial", 14))
+        self.queryLabel.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+
+        self.evalLabel = tk.Label(self.logContainer, text="Eval Log", font=("Arial", 14))
+        self.evalLabel.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
 
         self.txtLogQ = scrolledtext.ScrolledText(self.logContainer, height=15, wrap="word", width=40)
-        self.txtLogQ.pack(side="left", expand=True, fill="both")
+        self.txtLogQ.grid(row=1, column=0, padx=1, pady=5, sticky="nsew")
 
         self.txtLogE = scrolledtext.ScrolledText(self.logContainer, height=15, wrap="word", width=40)
-        self.txtLogE.pack(side="left", expand=True, fill="both")
+        self.txtLogE.grid(row=1, column=1, padx=1, pady=5, sticky="nsew")
         
-        self.txt.config(state="disabled")
         self.txtLogQ.config(state="disabled")
         self.txtLogE.config(state="disabled")
 
-        self.logContainer.pack_propagate(False)
+
+        #docs pag
+
+        self.docLabel = tk.Label(self.docsFrame, text="Loaded Documents", font=("Arial", 14)).pack()
+        self.txtDocs = scrolledtext.ScrolledText(self.docsFrame, height=15, wrap="word", width=40, state="disabled")
+        self.txtDocs.pack(expand=True, fill="both")
+
 
 
 
 #functions
+    def print_docs(self, docsList):
+        self.txtDocs.config(state="normal")
+        for doc in docsList:
+            filename = doc.meta.get("filename", "Unknown")
+            self.txtDocs.insert("end", filename + "\n")
+            
+        self.txtDocs.config(state="disabled")
+        
+
+
     def load_logs(self):
         if os.path.isfile(QUERY_LOG):
             with open(QUERY_LOG) as f:
