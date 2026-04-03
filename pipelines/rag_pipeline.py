@@ -35,8 +35,6 @@ DOCS_DIR = BASE_DIR / "docs"
 OLLAMA_MODEL = "mistral:7b"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 TOP_K = 4
-COUNT = 0   #num since last eval
-QUERY_LIMIT = 5 #allowed default num of unevaluated consecutive queries 
 
 NEW_DOC = False
 indexed_files = set()
@@ -106,14 +104,12 @@ def handle_submit(question, run_eval, show_sources):
 
     COUNT += 1
 
-    if run_eval and retrieved_docs or COUNT >= QUERY_LIMIT:
+    if run_eval and retrieved_docs:
         if COUNT >=5:
             print_on_gui(f"You've run '{COUNT}' queries without evaluating. Now running eval.")
         #write query and response to eval log
         start_eval_log(question, answer, sources)
         run_evaluation(question, answer, retrieved_docs, print_on_gui)
-        #reset count
-        COUNT = 0
 
     print_on_gui(answer)
     #log the query, response, and sources
