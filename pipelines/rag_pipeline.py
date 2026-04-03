@@ -35,10 +35,11 @@ DOCS_DIR = BASE_DIR / "docs"
 OLLAMA_MODEL = "mistral:7b"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 TOP_K = 4
+COUNT = 0   #num since last eval
+QUERY_LIMIT = 5 #allowed default num of unevaluated consecutive queries 
 
 NEW_DOC = False
 indexed_files = set()
-RUNNING = True
 rag_pipeline = None
 indexing_pipeline = None
 
@@ -65,7 +66,7 @@ def print_on_gui(*args, sep=" ", end="\n"):
         gui.print(text)
 
 def handle_submit(question, run_eval, show_sources):
-    global rag_pipeline, NEW_DOC
+    global rag_pipeline, NEW_DOC, COUNT
 
 
     if NEW_DOC:
@@ -103,10 +104,16 @@ def handle_submit(question, run_eval, show_sources):
     sources = [doc.meta.get("filename", "Unknown") for doc in retrieved_docs]
 
 
-    if run_eval and retrieved_docs:
+    COUNT += 1
+
+    if run_eval and retrieved_docs or COUNT >= QUERY_LIMIT:
+        if COUNT >=5:
+            print_on_gui(f"You've run '{COUNT}' queries without evaluating. Now running eval.")
         #write query and response to eval log
         start_eval_log(question, answer, sources)
         run_evaluation(question, answer, retrieved_docs, print_on_gui)
+        #reset count
+        COUNT = 0
 
     print_on_gui(answer)
     #log the query, response, and sources
@@ -120,6 +127,7 @@ def handle_submit(question, run_eval, show_sources):
             preview = doc.content[:200].replace('\n', ' ')
             print_on_gui(f"{i}. {filename}: {preview}...")
 
+    #clean up
     gui.submit["state"] = "normal"
     gui.entry["state"] = "normal"
     
@@ -160,6 +168,8 @@ def load_documents(docs_dir: Path, only_new=False) -> list[Document]:
         except Exception as e:
             print_on_gui(f"✗ Error loading {file_path.name}: {e}")
 
+    gui.print_docs(documents)
+
     print_on_gui(f"\nTotal: {len(documents)} documents loaded")
     return documents
 
@@ -199,7 +209,7 @@ def create_rag_pipeline(document_store: InMemoryDocumentStore):
 
 
 def rag_load():
-    global NEW_DOC, RUNNING, rag_pipeline, indexing_pipeline
+    global NEW_DOC, rag_pipeline, indexing_pipeline
 
     
     
