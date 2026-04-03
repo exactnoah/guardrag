@@ -85,8 +85,14 @@ class GUI:
 
 
         #docs pag
+        self.buttonBox = tk.Frame(self.docsFrame).pack()
+        self.upload_button2 = tk.Button(self.buttonBox, text="New File", command=self.upload)
+        self.upload_button2.pack(anchor="w", side="top", )
+        self.delete_button = tk.Button(self.buttonBox, text="Delete File", command=self.upload)
+        self.delete_button.pack(anchor="w", side="top")
 
         self.docLabel = tk.Label(self.docsFrame, text="Loaded Documents", font=("Arial", 14)).pack()
+    
         self.txtDocs = scrolledtext.ScrolledText(self.docsFrame, height=15, wrap="word", width=40, state="disabled")
         self.txtDocs.pack(expand=True, fill="both")
 
