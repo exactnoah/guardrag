@@ -102,11 +102,7 @@ def handle_submit(question, run_eval, show_sources):
     sources = [doc.meta.get("filename", "Unknown") for doc in retrieved_docs]
 
 
-    COUNT += 1
-
     if run_eval and retrieved_docs:
-        if COUNT >=5:
-            print_on_gui(f"You've run '{COUNT}' queries without evaluating. Now running eval.")
         #write query and response to eval log
         start_eval_log(question, answer, sources)
         run_evaluation(question, answer, retrieved_docs, print_on_gui)
