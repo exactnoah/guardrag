@@ -1,6 +1,7 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import scrolledtext, filedialog
+from tkinter.messagebox import showinfo
 
 import os
 import threading
@@ -16,8 +17,18 @@ class GUI:
         self.root.title("GuardRag")
         self.root.minsize(600, 400)
 
-        #tabs initialization
+        #Menubar
+        self.menubar = tk.Menu(self.root)
 
+        self.file = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="File", menu=self.file)
+        self.file.add_command(label="Add File", command=self.upload)
+        self.file.add_command(label="Delete File", command=self.delete_file)
+
+
+        self.root.config(menu=self.menubar)
+
+        #tabs initialization
         self.tabControl = ttk.Notebook(self.root)
 
         self.mainFrame = tk.Frame(self.tabControl)
@@ -35,9 +46,6 @@ class GUI:
         self.on_submit = on_submit
         self.on_upload = on_upload
         self.on_start = on_start
-
-        self.upload_button = tk.Button(self.mainFrame, text="New File", command=self.upload)
-        self.upload_button.pack(anchor="w")
 
         self.entry = tk.Entry(self.mainFrame, width=70)
         self.entry.pack(padx=10, pady=10, fill="x")
@@ -85,11 +93,6 @@ class GUI:
 
 
         #docs pag
-        self.buttonBox = tk.Frame(self.docsFrame).pack()
-        self.upload_button2 = tk.Button(self.buttonBox, text="New File", command=self.upload)
-        self.upload_button2.pack(anchor="w", side="top", )
-        self.delete_button = tk.Button(self.buttonBox, text="Delete File", command=self.upload)
-        self.delete_button.pack(anchor="w", side="top")
 
         self.docLabel = tk.Label(self.docsFrame, text="Loaded Documents", font=("Arial", 14)).pack()
     
@@ -124,6 +127,8 @@ class GUI:
 
 
 
+
+
 #functions
     def print_docs(self, docsList):
         self.txtDocs.config(state="normal")
@@ -155,6 +160,9 @@ class GUI:
         filepath = filedialog.askopenfilename()
         if filepath:
             self.on_upload(filepath)
+
+            filename = os.path.basename(filepath)
+            showinfo("File Added", f"File: '{filename}' added to docs folder successfully. New doc will be integrated alongside next query.")
 
     def submit_query(self):
         question = self.entry.get().strip()
@@ -217,3 +225,13 @@ class GUI:
             faithfulness=self.faithfulnessScale.get(),
             relevancy=self.relevancyScale.get()
         )
+
+
+    def delete_file(self):
+        print("gui.delete_file")
+        DIR = LOG_DIR = os.path.join(os.path.dirname(__file__), "..", "docs")
+        if DIR:
+            print(DIR)
+            filename = filedialog.askopenfilename(initialdir=DIR)
+            print(filename)
+            os.remove(filename)
