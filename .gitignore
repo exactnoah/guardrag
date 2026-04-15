@@ -33,3 +33,4 @@ Thumbs.db
 config/install.info
 logs/
 .ollama/
+cache/
