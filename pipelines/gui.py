@@ -12,10 +12,16 @@ from evaluation import set_metrics
 
 
 class GUI:
-    def __init__(self, on_submit, on_upload, on_start):
+    def __init__(self, on_submit, on_upload, on_start, on_delete):
         self.root = tk.Tk()
         self.root.title("GuardRag")
         self.root.minsize(600, 400)
+
+        #functions
+        self.on_submit = on_submit
+        self.on_upload = on_upload
+        self.on_start = on_start
+        self.on_delete = on_delete
 
         #Menubar
         self.menubar = tk.Menu(self.root)
@@ -43,9 +49,6 @@ class GUI:
         self.tabControl.pack(expand=1, fill="both")
 
         #mainFrame
-        self.on_submit = on_submit
-        self.on_upload = on_upload
-        self.on_start = on_start
 
         self.entry = tk.Entry(self.mainFrame, width=70)
         self.entry.pack(padx=10, pady=10, fill="x")
@@ -236,9 +239,16 @@ class GUI:
 
     def delete_file(self):
         print("gui.delete_file")
-        DIR = LOG_DIR = os.path.join(os.path.dirname(__file__), "..", "docs")
+        DIR =  os.path.join(os.path.dirname(__file__), "..", "docs")
         if DIR:
             print(DIR)
-            filename = filedialog.askopenfilename(initialdir=DIR)
-            print(filename)
-            os.remove(filename)
+            filepath = filedialog.askopenfilename(initialdir=DIR)
+            
+            os.remove(filepath)
+            filename = os.path.basename(filepath)
+
+            threading.Thread(
+                target=self.on_delete,
+                args=(filename,),
+                daemon=True
+            ).start()

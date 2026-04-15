@@ -151,7 +151,27 @@ def handle_submit(question, run_eval, show_sources):
     print_on_gui("\nNew Question: ")
 
 def handle_delete(filename):
-    global indexing_pipeline
+    global indexing_pipeline, indexed_files
+
+    if indexing_pipeline is None:
+        return
+    
+    store = indexing_pipeline.get_component("writer").document_store
+    docs = store.filter_documents(
+        filters={"field": "meta.filename", "operator": "==", "value": filename}
+    )
+    if not docs:
+        print_on_gui(f"No embeddings found for {filename}")
+        return
+    
+    ids = [doc.id for doc in docs]
+    store.delete_documents(ids)
+
+    store.save_to_disk(STORE_PATH)
+
+    indexed_files.discard(filename)
+    HASH_PATH.write_text(compute_docs_hash())
+    print_on_gui(f"File '{filename}' deleted and removed from memory.")
 
 #RAG functions
 def load_documents(docs_dir: Path, only_new=False) -> list[Document]:
@@ -298,7 +318,7 @@ def rag_load():
     
 def main():
     global gui
-    gui = GUI(on_submit=handle_submit, on_upload=get_file, on_start=rag_load)
+    gui = GUI(on_submit=handle_submit, on_upload=get_file, on_start=rag_load, on_delete=handle_delete)
     print_on_gui("Loading... \n\n")
     gui.progressive_bar()
 
