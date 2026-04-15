@@ -8,6 +8,8 @@ import importlib
 from pathlib import Path
 import shutil
 import threading
+import csv
+import json
 
 from evaluation import run_evaluation
 from logger import log_entry, start_eval_log
@@ -133,11 +135,11 @@ def load_documents(docs_dir: Path, only_new=False) -> list[Document]:
     if not docs_dir.exists():
         print_on_gui(f"Creating {docs_dir} directory...")
         docs_dir.mkdir(parents=True, exist_ok=True)
-        print_on_gui(f"Please add .txt, .docx, or .pdf files to {docs_dir} and run again.")
+        print_on_gui(f"Please add .txt, .csv, .json, .docx, or .pdf files to {docs_dir} and run again.")
         return documents
 
     for file_path in docs_dir.iterdir():
-        if file_path.suffix.lower() not in ['.txt', '.pdf', '.docx']:
+        if file_path.suffix.lower() not in ['.txt', '.pdf', '.docx', '.csv', '.json']:
             continue
         if only_new and file_path.name in indexed_files:
             continue
@@ -145,6 +147,26 @@ def load_documents(docs_dir: Path, only_new=False) -> list[Document]:
             if file_path.suffix.lower() == '.txt':
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
+            elif file_path.suffix.lower() == '.csv':
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    reader = csv.reader(f)
+                    rows = [', '.join(row) for row in reader]
+                    content = '\n'.join(rows)
+            elif file_path.suffix.lower() == '.json':
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                if isinstance(data, list):
+                    for item in data:
+                        item_content = json.dumps(item, ensure_ascii=False)
+                        if item_content.strip():
+                            documents.append(Document(
+                                content=item_content,
+                                meta={"filename": file_path.name}
+                            ))
+                    indexed_files.add(file_path.name)
+                    continue 
+                else:
+                    content = json.dumps(data, indent=2, ensure_ascii=False)
             elif file_path.suffix.lower() == '.pdf':
                 reader = PdfReader(file_path)
                 content = '\n'.join(page.extract_text() for page in reader.pages)
@@ -223,7 +245,7 @@ def rag_load():
     
 
     if not documents:
-        print_on_gui("\nNo documents found. Add .pdf, .docx, or .txt files to ../docs/ directory.")
+        print_on_gui("\nNo documents found. Add .pdf, .csv, .json, .docx, or .txt files to ../docs/ directory.")
         return
 
     gui.update_bar(10) #40%
