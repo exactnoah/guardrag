@@ -69,24 +69,31 @@ class GUI:
                        variable=self.sourceChecked).pack(anchor="w", side="left", pady=5)
         
         #logFrame
-        self.logContainer = tk.Frame(self.logFrame)
-        self.logContainer.pack(expand=True, fill="both")
+            #
+        self.logTabControl = ttk.Notebook(self.logFrame)
 
-        self.logContainer.columnconfigure(0, weight=1)
-        self.logContainer.columnconfigure(1, weight=1)
-        self.logContainer.rowconfigure(1, weight=1)
+        self.queryLogFrame = tk.Frame(self.logTabControl)
+        self.evalLogFrame = tk.Frame(self.logTabControl)
+        self.logTabControl.add(self.queryLogFrame, text='Queries', padding=5)
+        self.logTabControl.add(self.evalLogFrame, text='Evaluations', padding=5)
 
-        self.queryLabel = tk.Label(self.logContainer, text="Query Log", font=("Arial", 14))
-        self.queryLabel.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+        self.logTabControl.pack(expand=1, fill="both")
 
-        self.evalLabel = tk.Label(self.logContainer, text="Eval Log", font=("Arial", 14))
-        self.evalLabel.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
 
-        self.txtLogQ = scrolledtext.ScrolledText(self.logContainer, height=15, wrap="word", width=40)
-        self.txtLogQ.grid(row=1, column=0, padx=1, pady=5, sticky="nsew")
 
-        self.txtLogE = scrolledtext.ScrolledText(self.logContainer, height=15, wrap="word", width=40)
-        self.txtLogE.grid(row=1, column=1, padx=1, pady=5, sticky="nsew")
+        
+
+        self.queryLabel = tk.Label(self.queryLogFrame, text="Query Log", font=("Arial", 14))
+        self.queryLabel.pack()
+
+        self.evalLabel = tk.Label(self.evalLogFrame, text="Eval Log", font=("Arial", 14))
+        self.evalLabel.pack()
+
+        self.txtLogQ = scrolledtext.ScrolledText(self.queryLogFrame, height=15, wrap="word", width=40)
+        self.txtLogQ.pack(expand=True, fill="both")
+
+        self.txtLogE = scrolledtext.ScrolledText(self.evalLogFrame, height=15, wrap="word", width=40)
+        self.txtLogE.pack(expand=True, fill="both")
         
         self.txtLogQ.config(state="disabled")
         self.txtLogE.config(state="disabled")
