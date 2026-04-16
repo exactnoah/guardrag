@@ -1,6 +1,7 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import scrolledtext, filedialog
+from tkinter.messagebox import showinfo
 
 import os
 import threading
@@ -11,13 +12,29 @@ from evaluation import set_metrics
 
 
 class GUI:
-    def __init__(self, on_submit, on_upload, on_start):
+    def __init__(self, on_submit, on_upload, on_start, on_delete):
         self.root = tk.Tk()
         self.root.title("GuardRag")
         self.root.minsize(600, 400)
 
-        #tabs initialization
+        #functions
+        self.on_submit = on_submit
+        self.on_upload = on_upload
+        self.on_start = on_start
+        self.on_delete = on_delete
 
+        #Menubar
+        self.menubar = tk.Menu(self.root)
+
+        self.file = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="File", menu=self.file)
+        self.file.add_command(label="Add File", command=self.upload)
+        self.file.add_command(label="Delete File", command=self.delete_file)
+
+
+        self.root.config(menu=self.menubar)
+
+        #tabs initialization
         self.tabControl = ttk.Notebook(self.root)
 
         self.mainFrame = tk.Frame(self.tabControl)
@@ -32,12 +49,6 @@ class GUI:
         self.tabControl.pack(expand=1, fill="both")
 
         #mainFrame
-        self.on_submit = on_submit
-        self.on_upload = on_upload
-        self.on_start = on_start
-
-        self.upload_button = tk.Button(self.mainFrame, text="New File", command=self.upload)
-        self.upload_button.pack(anchor="w")
 
         self.entry = tk.Entry(self.mainFrame, width=70)
         self.entry.pack(padx=10, pady=10, fill="x")
@@ -61,24 +72,31 @@ class GUI:
                        variable=self.sourceChecked).pack(anchor="w", side="left", pady=5)
         
         #logFrame
-        self.logContainer = tk.Frame(self.logFrame)
-        self.logContainer.pack(expand=True, fill="both")
+            #
+        self.logTabControl = ttk.Notebook(self.logFrame)
 
-        self.logContainer.columnconfigure(0, weight=1)
-        self.logContainer.columnconfigure(1, weight=1)
-        self.logContainer.rowconfigure(1, weight=1)
+        self.queryLogFrame = tk.Frame(self.logTabControl)
+        self.evalLogFrame = tk.Frame(self.logTabControl)
+        self.logTabControl.add(self.queryLogFrame, text='Queries', padding=5)
+        self.logTabControl.add(self.evalLogFrame, text='Evaluations', padding=5)
 
-        self.queryLabel = tk.Label(self.logContainer, text="Query Log", font=("Arial", 14))
-        self.queryLabel.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+        self.logTabControl.pack(expand=1, fill="both")
 
-        self.evalLabel = tk.Label(self.logContainer, text="Eval Log", font=("Arial", 14))
-        self.evalLabel.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
 
-        self.txtLogQ = scrolledtext.ScrolledText(self.logContainer, height=15, wrap="word", width=40)
-        self.txtLogQ.grid(row=1, column=0, padx=1, pady=5, sticky="nsew")
 
-        self.txtLogE = scrolledtext.ScrolledText(self.logContainer, height=15, wrap="word", width=40)
-        self.txtLogE.grid(row=1, column=1, padx=1, pady=5, sticky="nsew")
+        
+
+        self.queryLabel = tk.Label(self.queryLogFrame, text="Query Log", font=("Arial", 14))
+        self.queryLabel.pack()
+
+        self.evalLabel = tk.Label(self.evalLogFrame, text="Eval Log", font=("Arial", 14))
+        self.evalLabel.pack()
+
+        self.txtLogQ = scrolledtext.ScrolledText(self.queryLogFrame, height=15, wrap="word", width=40)
+        self.txtLogQ.pack(expand=True, fill="both")
+
+        self.txtLogE = scrolledtext.ScrolledText(self.evalLogFrame, height=15, wrap="word", width=40)
+        self.txtLogE.pack(expand=True, fill="both")
         
         self.txtLogQ.config(state="disabled")
         self.txtLogE.config(state="disabled")
@@ -87,6 +105,7 @@ class GUI:
         #docs pag
 
         self.docLabel = tk.Label(self.docsFrame, text="Loaded Documents", font=("Arial", 14)).pack()
+    
         self.txtDocs = scrolledtext.ScrolledText(self.docsFrame, height=15, wrap="word", width=40, state="disabled")
         self.txtDocs.pack(expand=True, fill="both")
 
@@ -115,6 +134,8 @@ class GUI:
         tk.Label(relevancy_hint, text="Stricter →", fg="gray").pack(side="right")
 
         tk.Button(self.evalFrame, text="Apply", command=self.apply_thresholds).pack(anchor="w", padx=10, pady=10)
+
+
 
 
 
@@ -149,6 +170,9 @@ class GUI:
         filepath = filedialog.askopenfilename()
         if filepath:
             self.on_upload(filepath)
+
+            filename = os.path.basename(filepath)
+            showinfo("File Added", f"File: '{filename}' added to docs folder successfully. New doc will be integrated alongside next query.")
 
     def submit_query(self):
         question = self.entry.get().strip()
@@ -211,3 +235,20 @@ class GUI:
             faithfulness=self.faithfulnessScale.get(),
             relevancy=self.relevancyScale.get()
         )
+
+
+    def delete_file(self):
+        print("gui.delete_file")
+        DIR =  os.path.join(os.path.dirname(__file__), "..", "docs")
+        if DIR:
+            print(DIR)
+            filepath = filedialog.askopenfilename(initialdir=DIR)
+            
+            os.remove(filepath)
+            filename = os.path.basename(filepath)
+
+            threading.Thread(
+                target=self.on_delete,
+                args=(filename,),
+                daemon=True
+            ).start()

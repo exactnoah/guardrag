@@ -33,6 +33,7 @@ Thumbs.db
 config/install.info
 logs/
 .ollama/
+cache/
 
 # GUI test window
 pipelines/testWin.py
