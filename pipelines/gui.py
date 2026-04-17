@@ -135,6 +135,34 @@ class GUI:
 
         tk.Button(self.evalFrame, text="Apply", command=self.apply_thresholds).pack(anchor="w", padx=10, pady=10)
 
+        tk.Label(self.evalFrame, text="Periodic Evaluation").pack(anchor="w", padx=10, pady=(15,0))
+
+        self.periodicEvalVar = tk.BooleanVar(value=False)
+        periodic_row = tk.Frame(self.evalFrame)
+        periodic_row.pack(anchor="w", padx=10, pady=(4,0))
+
+        tk.Checkbutton(
+            periodic_row,
+            text="Run deepeval every",
+            variable=self.periodicEvalVar,
+            command=self.toggle_periodic_eval
+        ).pack(side="left")
+
+        self.periodicEvalSpinbox = tk.Spinbox(
+            periodic_row, from_=1, to=100, width=4, state="disabled"
+        )
+        self.periodicEvalSpinbox.delete(0, "end")
+        self.periodicEvalSpinbox.insert(0, "5")
+        self.periodicEvalSpinbox.pack(side="left", padx=(4, 4))
+
+        tk.Label(periodic_row, text="queries", fg="gray").pack(side="left")
+
+        tk.Label(
+            self.evalFrame,
+            text="Overrides the manual eval toggle while active.",
+            fg="gray", wraplength=280, justify="left"
+        ).pack(anchor="w", padx=10, pady=(2, 10))
+
 
 
 
@@ -252,3 +280,20 @@ class GUI:
                 args=(filename,),
                 daemon=True
             ).start()
+
+
+    def toggle_periodic_eval(self):
+        if self.periodicEvalVar.get():
+            self.periodicEvalSpinbox.config(state="normal")
+        else:
+            self.periodicEvalSpinbox.config(state="disabled")
+
+
+    def get_periodic_eval_interval(self):
+        """Returns (enabled, interval). interval is None if disabled."""
+        if self.periodicEvalVar.get():
+            try:
+                return True, int(self.periodicEvalSpinbox.get())
+            except ValueError:
+                return True, 5
+        return False, None

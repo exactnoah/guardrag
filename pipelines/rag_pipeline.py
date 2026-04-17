@@ -46,6 +46,7 @@ NEW_DOC = False
 indexed_files = set()
 rag_pipeline = None
 indexing_pipeline = None
+query_counter = 0
 
 
 def compute_docs_hash():
@@ -85,7 +86,7 @@ def print_on_gui(*args, sep=" ", end="\n"):
         gui.print(text)
 
 def handle_submit(question, run_eval, show_sources):
-    global rag_pipeline, NEW_DOC
+    global rag_pipeline, NEW_DOC, query_counter
 
 
     if NEW_DOC and indexing_pipeline is not None:
@@ -126,9 +127,15 @@ def handle_submit(question, run_eval, show_sources):
     retrieved_docs = result["retriever"]["documents"]
     sources = [doc.meta.get("filename", "Unknown") for doc in retrieved_docs]
 
+    periodic_enabled, interval = gui.get_periodic_eval_interval()
+    if periodic_enabled and interval:
+        query_counter += 1
+        should_eval = (query_counter % interval == 0)
+    else:
+        query_counter = 0
+        should_eval = run_eval
 
-    if run_eval and retrieved_docs:
-        #write query and response to eval log
+    if should_eval and retrieved_docs:
         start_eval_log(question, answer, sources)
         run_evaluation(question, answer, retrieved_docs, print_on_gui)
 

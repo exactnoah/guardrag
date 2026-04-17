@@ -40,10 +40,6 @@ def run_evaluation(question, answer, retrieved_docs, print_fn):
         print_fn(message)
         eval_log_entry(message)
     
-    def output(message):
-        print_fn(message)
-        eval_log_entry(message)
-    
     judge_model = get_judge_model()
     metrics = get_metrics(judge_model)
 
@@ -70,9 +66,6 @@ def run_evaluation(question, answer, retrieved_docs, print_fn):
 
     if answer_valid:
         output("\n--- Evaluation Results ---")
-        output("\n--- Evaluation Results ---")
         for metric in metrics_data:
-            output(f"{metric.name}: {metric.score:.2f}")
-            output(f"Reasoning: {metric.reason}")
             output(f"{metric.name}: {metric.score:.2f}")
             output(f"Reasoning: {metric.reason}")
