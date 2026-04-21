@@ -1,0 +1,43 @@
+## Build Windows Wizard Installer
+
+The repo now includes an Inno Setup based wizard installer scaffold.
+
+### Prerequisites
+- Inno Setup 6 (`ISCC.exe`) installed
+- Python 3.10+
+
+### Quick build (after clone)
+1. Open PowerShell in the repository root.
+2. (Optional) Verify Python:
+
+```powershell
+py --version
+```
+
+3. If Inno Setup is not installed (`ISCC.exe` missing), install it:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\install_inno_setup.ps1
+```
+
+4. Build the installer:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\build_installer.ps1
+```
+
+Output:
+- `installer/windows/dist/GuardRag-Setup.exe`
+
+Optional smoke test on a clean machine/VM:
+- Run `GuardRag-Setup.exe`
+- Complete wizard selections
+- Confirm post-install log at `logs/installer-post-install.log`
+- Confirm app launch works (if launch option selected)
+
+### Installer behavior
+- Copies the project into `Program Files\GuardRag`
+- Lets user choose whether to pull `mistral:7b` during install
+- Lets user choose whether to launch GuardRag after install
+- Runs post-install orchestration via `installer/windows/post_install.ps1`
+- Writes post-install logs to `logs/installer-post-install.log`
