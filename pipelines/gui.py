@@ -5,7 +5,6 @@ from tkinter.messagebox import showinfo
 
 import os
 import threading
-from pathlib import Path
 from logger import EVAL_LOG
 from logger import QUERY_LOG
 from evaluation import set_metrics
