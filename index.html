@@ -192,6 +192,58 @@
       color: #03181c;
     }
 
+    /* ── Demo / GIF section ── */
+    .demo-card {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 0.9rem;
+      background: rgba(255, 255, 255, 0.03);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.22s ease, border-color 0.22s ease;
+    }
+
+    .demo-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(60, 194, 200, 0.5);
+    }
+
+    .demo-gif-wrap {
+      background: rgba(5, 14, 18, 0.6);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      /* fixed height keeps cards uniform even before the gif loads */
+      min-height: 220px;
+    }
+
+    .demo-gif-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .demo-label {
+      padding: 0.85rem 1rem 0.95rem;
+    }
+
+    .demo-label h6 {
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin: 0 0 0.2rem;
+      color: var(--brand);
+    }
+
+    .demo-label p {
+      margin: 0;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
     .footer {
       color: #9db6bf;
       border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -215,6 +267,7 @@
       <div class="collapse navbar-collapse" id="navMain">
         <ul class="navbar-nav ms-auto gap-2">
           <li class="nav-item"><a class="nav-link text-light" href="#about">About</a></li>
+          <li class="nav-item"><a class="nav-link text-light" href="#demo">Demo</a></li>
           <li class="nav-item"><a class="nav-link text-light" href="#stack">Tools Stack</a></li>
           <li class="nav-item"><a class="nav-link text-light" href="#authors">Authors</a></li>
           <li class="nav-item"><a class="nav-link text-light" href="#build">Build</a></li>
@@ -269,6 +322,67 @@
       </p>
     </section>
 
+    <!-- ── Features in Action (GIF Demo) ── -->
+    <section id="demo" class="glass-card p-4 p-md-5 mb-4">
+      <h2 class="section-title">Features in Action</h2>
+      <p class="section-copy mb-4">A quick look at the GuardRag desktop experience.</p>
+
+      <div class="row g-3">
+        <!-- Upload file -->
+        <div class="col-sm-6">
+          <div class="demo-card h-100">
+            <div class="demo-gif-wrap">
+              <img src="images/upload.gif" alt="Uploading a file into GuardRag" loading="lazy">
+            </div>
+            <div class="demo-label">
+              <h6>Upload a File</h6>
+              <p>Drag in or browse to any .pdf, .docx, .txt, .csv, or .json file to add it to your local index.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Remove file -->
+        <div class="col-sm-6">
+          <div class="demo-card h-100">
+            <div class="demo-gif-wrap">
+              <img src="images/removefile.gif" alt="Removing a file from GuardRag" loading="lazy">
+            </div>
+            <div class="demo-label">
+              <h6>Remove a File</h6>
+              <p>Cleanly drop a document from the index when it's no longer needed — no restart required.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Auto evaluation -->
+        <div class="col-sm-6">
+          <div class="demo-card h-100">
+            <div class="demo-gif-wrap">
+              <img src="images/autoeval.gif" alt="Toggling auto evaluation in GuardRag" loading="lazy">
+            </div>
+            <div class="demo-label">
+              <h6>Toggle Auto Evaluation</h6>
+              <p>Switch on automatic quality scoring so every answer is graded against your documents in real time.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Eval metric -->
+        <div class="col-sm-6">
+          <div class="demo-card h-100">
+            <div class="demo-gif-wrap">
+              <img src="images/evalmetric.gif" alt="Changing evaluation metrics in GuardRag" loading="lazy">
+            </div>
+            <div class="demo-label">
+              <h6>Change Evaluation Metric</h6>
+              <p>Pick the scoring strategy that fits your use case — swap between faithfulness, relevance, and more.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- ── End Demo ── -->
+
     <section id="stack" class="glass-card p-4 p-md-5 mb-4">
       <h2 class="section-title">Tools Stack</h2>
       <p class="section-copy">Core technologies currently used by the project.</p>
@@ -293,8 +407,8 @@
         </div>
         <div class="col-sm-6 col-lg-3">
           <div class="stack-item">
-            <h5>Tkinter + Bootstrap</h5>
-            <p>Tkinter desktop app with web support.</p>
+            <h5>Tkinter</h5>
+            <p>Intuitive desktop app</p>
           </div>
         </div>
       </div>
@@ -322,7 +436,7 @@
           <article class="author-card h-100">
             <p class="author-name">Greg Raisor</p>
             <p class="author-role">UI/UX App Designer</p>
-            <p class="mb-0 section-copy">Designs onboarding, installer wizard flow, and in-app usability.</p>
+            <p class="mb-0 section-copy">Designs onboarding, evaluation behavior, and in-app usability.</p>
           </article>
         </div>
       </div>
@@ -338,9 +452,6 @@
       <h5 class="fw-bold mt-4">Run Manually After Setup</h5>
       <div class="build-block">.\.venv\Scripts\Activate.ps1
 python .\pipelines\rag_pipeline.py</div>
-
-      <h5 class="fw-bold mt-4">Build Windows Installer</h5>
-      <div class="build-block">powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\build_installer.ps1</div>
     </section>
   </main>
 
