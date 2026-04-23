@@ -156,11 +156,6 @@ class GUI:
 
         tk.Label(periodic_row, text="queries", fg="gray").pack(side="left")
 
-        tk.Label(
-            self.evalFrame,
-            text="Overrides the manual eval toggle while active.",
-            fg="gray", wraplength=280, justify="left"
-        ).pack(anchor="w", padx=10, pady=(2, 10))
 
 
 
