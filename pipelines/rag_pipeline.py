@@ -135,7 +135,7 @@ def handle_submit(question, run_eval, show_sources):
         query_counter = 0
         should_eval = run_eval
 
-    if should_eval and retrieved_docs:
+    if should_eval or run_eval and retrieved_docs:
         start_eval_log(question, answer, sources)
         run_evaluation(question, answer, retrieved_docs, print_on_gui)
 
