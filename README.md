@@ -1,5 +1,4 @@
 # GuardRag
-
 ## Project Overview
 GuardRag is a local Retrieval-Augmented Generation (RAG) application that lets users upload private files and ask questions grounded in those files. Check out our [home page](https://exactnoah.github.io/guardrag/)
 
@@ -16,18 +15,33 @@ Technology summary:
 - API framework: FastAPI (scaffolded)
 - Optional container path: Docker
 
-## Installation
+## Features in Action
 
+**Upload a File** — Add any supported document to your local index.
+
+<img src="images/upload.gif" alt="Uploading a file into GuardRag" width="400">
+
+**Remove a File** — Drop a document from the index without restarting.
+
+<img src="images/removefile.gif" alt="Removing a file from GuardRag" width="400">
+
+**Toggle Auto Evaluation** — Enable automatic quality scoring on every answer.
+
+<img src="images/autoeval.gif" alt="Toggle auto evaluation" width="400">
+
+**Change Evaluation Metric** — Swap between faithfulness, relevance, and other scoring strategies.
+
+<img src="images/evalmetric.gif" alt="Change evaluation metrics" width="400">
+
+## Installation
 ### Prerequisites
 - Python 3.10+
 
 ### One-time setup (Windows)
 Run:
-
 ```powershell
 .\setup.ps1
 ```
-
 `setup.ps1` calls the consolidated installer at `scripts/install.py`, which:
 - Creates/reuses `.venv`
 - Installs dependencies from `setup_materials/requirements.txt`
@@ -36,30 +50,22 @@ Run:
 - Pulls `mistral:7b` when Ollama is installed and running
 
 Direct usage:
-
 ```bash
 python scripts/install.py --model mistral:7b
 ```
 
 ## Run GuardRag
-
 Make sure Ollama is running
 
 Activate the virtual environment:
-
 ```powershell
 .\.venv\Scripts\Activate.ps1
 ```
-
 Start the desktop GUI:
-
 ```powershell
 python .\pipelines\rag_pipeline.py
 ```
-
 Type `quit` in the prompt box to exit the app.
-
-
 
 ## Usage
 - Click `File` then `Add File` to copy files into the system.
@@ -72,4 +78,3 @@ Type `quit` in the prompt box to exit the app.
 - `project_docs/` - architecture and design notes
 - `installer/windows/` - Inno Setup wizard and build scripts
 - `scripts/` - consolidated install tooling
-
